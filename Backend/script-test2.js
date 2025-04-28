@@ -1,8 +1,4 @@
-//0. Girl, don't forget to declare the gallery!!
-
-let gallery = document.querySelector(".gallery");
-
-// 1.declare WORKS as a global variable (filled ulteriourly inside the FETCH function)
+// 1.declare WORKS as a global variable (filled inside the FETCH function)
 let works = [];
 
 // 2. Fonction FETCH - I get the stuff from the API!
@@ -37,37 +33,11 @@ function displayWorks(worksToDisplay) {
   });
 }
 
-//4.0 making the "all" filter button
-const btnTous = document.querySelector("#tous");
-btnTous.addEventListener("click", () => {
-  displayWorks(works);
-});
-
-//4.1 making the "objets" filter button, baby!
+//4. making the "objets" filter button, baby!
 
 const btnObjets = document.querySelector("#objets");
 btnObjets.addEventListener("click", () => {
   const worksFiltres = works.filter((work) => work.category.name === "Objets");
-  displayWorks(worksFiltres);
-});
-
-//4.2 making the "appartments" filter button, baby!
-
-const btnAppartements = document.querySelector("#appartements");
-btnAppartements.addEventListener("click", () => {
-  const worksFiltres = works.filter(
-    (work) => work.category.name === "Appartements"
-  );
-  displayWorks(worksFiltres);
-});
-
-//4.3 making the "hotels" filter button, baby!
-
-const btnHotels = document.querySelector("#hotels");
-btnHotels.addEventListener("click", () => {
-  const worksFiltres = works.filter(
-    (work) => work.category.name === "Hotels & restaurants"
-  );
   displayWorks(worksFiltres);
 });
 
