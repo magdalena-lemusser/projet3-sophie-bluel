@@ -33,13 +33,42 @@ function displayWorks(worksToDisplay) {
   });
 }
 
-//4. making the "objets" filter button, baby!
+//5 .0 making the "all" filter button
+const btnTous = document.querySelector("#tous");
+btnTous.addEventListener("click", () => {
+  displayWorks(works);
+});
+
+//5.1 making the "objets" filter button, baby!
 
 const btnObjets = document.querySelector("#objets");
 btnObjets.addEventListener("click", () => {
   const worksFiltres = works.filter((work) => work.category.name === "Objets");
   displayWorks(worksFiltres);
 });
+
+//5.2 making the "appartments" filter button, baby!
+
+const btnAppartements = document.querySelector("#appartements");
+btnAppartements.addEventListener("click", () => {
+  const worksFiltres = works.filter(
+    (work) => work.category.name === "Appartements"
+  );
+  displayWorks(worksFiltres);
+});
+
+//5.3 making the "hotels" filter button, baby!
+
+const btnHotels = document.querySelector("#hotels");
+btnHotels.addEventListener("click", () => {
+  const worksFiltres = works.filter(
+    (work) => work.category.name === "Hotels & restaurants"
+  );
+  displayWorks(worksFiltres);
+});
+
+// 6. Initializing my code - keep this at the end!
+fetchWorks();
 
 // 5. Initializing my code - keep this at the end!
 fetchWorks();

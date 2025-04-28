@@ -2,15 +2,33 @@
 
 let gallery = document.querySelector(".gallery");
 
+//declaring the buttons!
+let sectionFiltres = document.querySelector(".section-filtres");
+
 // 1.declare WORKS as a global variable (filled ulteriourly inside the FETCH function)
 let works = [];
 
-// 2. Fonction FETCH - I get the stuff from the API!
+//1.1 declare CATEGORIES as a global variable (filled ulteriourly insite the FETCH function)
+let categories = [];
+
+// 2. Fonction FETCH - I get the WORKS from the API!
 const fetchWorks = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/works");
     works = await response.json(); //HERE IM FILLING MY GLOBAL WORKS VARIABLE!!!!
     displayWorks(works); // Display everything
+  } catch (error) {
+    console.error("Erreur lors de la récupération des travaux :", error);
+  }
+};
+
+// 2. Fonction FETCH - I get the CATEGORIES from the API!
+const fetchCategories = async () => {
+  try {
+    const response = await fetch("http://localhost:5678/api/categories");
+    categories = await response.json(); //HERE IM FILLING MY GLOBAL CATEGORIES VARIABLE!!!!
+    console.log(categories);
+    appendButtons(categories); // Add this here!
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
@@ -27,7 +45,7 @@ function createFigure({ imageUrl, title }) {
   return figure;
 }
 
-// 3. Fonction DISPLAY - adds the figures to the DOM
+// 4. Fonction DISPLAY - adds the figures to the DOM
 
 function displayWorks(worksToDisplay) {
   gallery.innerHTML = ""; // clear previous items
@@ -37,39 +55,38 @@ function displayWorks(worksToDisplay) {
   });
 }
 
-//4.0 making the "all" filter button
-const btnTous = document.querySelector("#tous");
-btnTous.addEventListener("click", () => {
-  displayWorks(works);
-});
+//CREATING THE BUTTONS
 
-//4.1 making the "objets" filter button, baby!
+function createButtons(btn) {
+  const button = document.createElement("button");
+  button.innerText = btn.name;
+  button.id = `category-${btn.id}`;
 
-const btnObjets = document.querySelector("#objets");
-btnObjets.addEventListener("click", () => {
-  const worksFiltres = works.filter((work) => work.category.name === "Objets");
-  displayWorks(worksFiltres);
-});
+  // Add the event listener dynamically:
+  button.addEventListener("click", () => {
+    if (btn.id === 0) {
+      // If it's the "All" button (id 0), display everything
+      displayWorks(works);
+    } else {
+      // Otherwise, filter by category id
+      const filteredWorks = works.filter((work) => work.category.id === btn.id); //we check if work.category.id === btn.id — matching work to category!
+      displayWorks(filteredWorks);
+    }
+  });
 
-//4.2 making the "appartments" filter button, baby!
+  return button;
+}
 
-const btnAppartements = document.querySelector("#appartements");
-btnAppartements.addEventListener("click", () => {
-  const worksFiltres = works.filter(
-    (work) => work.category.name === "Appartements"
-  );
-  displayWorks(worksFiltres);
-});
+//APPENDING THE BUTTONS
 
-//4.3 making the "hotels" filter button, baby!
+function appendButtons(dynamicButtons) {
+  sectionFiltres.innerHTML = ""; // clear previous buttons
+  dynamicButtons.forEach((btn) => {
+    const button = createButtons(btn);
+    sectionFiltres.appendChild(button);
+  });
+}
 
-const btnHotels = document.querySelector("#hotels");
-btnHotels.addEventListener("click", () => {
-  const worksFiltres = works.filter(
-    (work) => work.category.name === "Hotels & restaurants"
-  );
-  displayWorks(worksFiltres);
-});
+fetchCategories();
 
-// 5. Initializing my code - keep this at the end!
 fetchWorks();
