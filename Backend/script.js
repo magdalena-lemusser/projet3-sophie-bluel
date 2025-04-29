@@ -15,7 +15,7 @@ const fetchWorks = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/works");
     works = await response.json(); //defining the values of the global WORKS variable
-    displayWorks(works); // call the displayWorks function WITHIN the fetch function
+    displayWorks(works); //passing down the works array to the displayWorks function so it knows what to work with!
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
@@ -27,9 +27,9 @@ const fetchCategories = async () => {
     const response = await fetch("http://localhost:5678/api/categories");
     categories = await response.json(); //this defines the values for the global CATEGORIES variable
     console.log(categories);
-    const allCategory = { id: 0, name: "Tous" };
+    const allCategory = { id: 0, name: "Tous" }; // Adds the "All" category manually first so it appears first!
     const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
-    appendButtons(allCategories); //call the appendButtons function
+    appendButtons(allCategories); //passing down the allCategories array to the appendButtons function so it knows what to work with!
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }

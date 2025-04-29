@@ -198,6 +198,88 @@ nav li {
   font-size: 1.2em;
 }
 
+/*ADDED A LINK TO THE LOGIN PAGE*/
+nav a {
+  text-decoration: none; /*ok to keep this for both index+login pages cause same styling for links*/
+}
+
+nav a:visited {
+  color: inherit;
+}
+
+/*STYLING THE LOGIN PAGE*/
+
+#nav-login {
+  font-weight: bold;
+}
+
+#login-form {
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 150px;
+  margin-bottom: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+}
+
+#login-form form {
+  width: 70%;
+  box-sizing: border-box;
+}
+
+#login-form h2 {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+#login-form .email-plus-password {
+  width: 100%;
+  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+#login-form label {
+  display: block;
+  margin: 2em 0 1em 0;
+  font-size: 14px;
+}
+
+.email-plus-password input {
+  width: 100%;
+  height: 50px;
+  font-size: 1.2em;
+  box-sizing: border-box;
+  border: 0px solid transparent;
+  box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.09);
+}
+
+#login-form .button-plus-oublie {
+  width: 100%;
+  height: 20%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.button-plus-oublie input {
+  height: 50px;
+  border: none;
+}
+
+.button-plus-oublie a {
+  color: black;
+}
+
+/*STYLING THE FOOTER*/
+footer {
+  background-color: white;
+}
 li:hover {
   color: #b1663c;
 }
