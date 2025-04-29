@@ -1,8 +1,7 @@
-//0. Girl, don't forget to declare the gallery!!
-
+// selecting the DOM place for adding the WORKS
 let gallery = document.querySelector(".gallery");
 
-//declaring the buttons!
+//selecting the DOM place for adding the filter buttons
 let sectionFiltres = document.querySelector(".section-filtres");
 
 // 1.declare WORKS as a global variable (filled ulteriourly inside the FETCH function)
@@ -11,24 +10,26 @@ let works = [];
 //1.1 declare CATEGORIES as a global variable (filled ulteriourly insite the FETCH function)
 let categories = [];
 
-// 2. Fonction FETCH - I get the WORKS from the API!
+// 2. Fetching the WORKS from the API
 const fetchWorks = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/works");
-    works = await response.json(); //HERE IM FILLING MY GLOBAL WORKS VARIABLE!!!!
-    displayWorks(works); // Display everything
+    works = await response.json(); //defining the values of the global WORKS variable
+    displayWorks(works); // call the displayWorks function WITHIN the fetch function
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
 };
 
-// 2. Fonction FETCH - I get the CATEGORIES from the API!
+// 2. Fetching the CATEGORIES from the API + adding an "all" category
 const fetchCategories = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/categories");
-    categories = await response.json(); //HERE IM FILLING MY GLOBAL CATEGORIES VARIABLE!!!!
+    categories = await response.json(); //this defines the values for the global CATEGORIES variable
     console.log(categories);
-    appendButtons(categories); // Add this here!
+    const allCategory = { id: 0, name: "Tous" };
+    const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
+    appendButtons(allCategories); //call the appendButtons function
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
@@ -80,6 +81,7 @@ function createButtons(btn) {
 //APPENDING THE BUTTONS
 
 function appendButtons(dynamicButtons) {
+  //dynamicButtons is just a label here for the categories from the API
   sectionFiltres.innerHTML = ""; // clear previous buttons
   dynamicButtons.forEach((btn) => {
     const button = createButtons(btn);
