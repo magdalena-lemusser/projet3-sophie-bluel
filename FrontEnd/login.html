@@ -12,6 +12,7 @@
     />
     <meta name="description" content="" />
     <link rel="stylesheet" href="./assets/style.css" />
+    <script src="../Backend/script.js" defer></script>
   </head>
   <body>
     <header>
@@ -26,17 +27,18 @@
       </nav>
     </header>
     <main>
-      <section id="login-form">
-        <form action="#" method="post">
+      <section id="login-section">
+        <form id="login-form">
           <h2>Log In</h2>
+          <div class="error" id="error-message"></div>
           <div class="email-plus-password">
             <div class="email-div">
               <label>E-mail</label>
-              <input type="text" />
+              <input type="text" id="email" required />
             </div>
             <div class="password-div">
               <label>Mot de passe</label>
-              <input type="password" />
+              <input type="password" id="password" required />
             </div>
           </div>
           <div class="button-plus-oublie">

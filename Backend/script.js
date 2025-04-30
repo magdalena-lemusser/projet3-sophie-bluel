@@ -92,3 +92,58 @@ function appendButtons(dynamicButtons) {
 fetchCategories();
 
 fetchWorks();
+
+//SETTING THE LOGIN PAGE
+const loginForm = document.querySelector("#login-form");
+if (loginForm) {
+  //THIS CODE ONLY RUNS IF THERE IS AN ELEMENT WITH ID LOGIN FORM
+  document
+    .getElementById("login-form")
+    .addEventListener("submit", async function (e) {
+      e.preventDefault(); // Stop form from reloading the page
+
+      const email = document.getElementById("email").value.trim(); //makes sure the user sends a CLEAN STRING
+      const password = document.getElementById("password").value.trim();
+      const errorElement = document.getElementById("error-message");
+      errorElement.textContent = "";
+
+      //Error message.
+
+      if (!email || !password) {
+        //if the email or password are EMPTY
+        errorElement.textContent =
+          "Veuillez saisir votre e-mail et mot de passe"; // show this error message
+        return; // and stop the code here. Don't run fetch() below
+      }
+
+      //sending the POST request
+
+      try {
+        const response = await fetch("http://localhost:5678/api/users/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        //login failure
+        if (!response.ok) {
+          //(login failed according to server)
+          errorElement.textContent =
+            data.message || "Erreur d'authentification."; //show an error
+          return; //stop here
+        }
+
+        //login success
+        localStorage.setItem("user", JSON.stringify(data)); // Saves this info as a string in the browser storage under the name USER
+        window.location.href = "../FrontEnd/index.html"; // 🎉 redirect
+      } catch (err) {
+        console.error("Erreur d'authentification:", err);
+        errorElement.textContent =
+          "Erreur d'authentification. Veuillez reessayer.";
+      }
+    });
+}
