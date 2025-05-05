@@ -12,6 +12,13 @@
     />
     <meta name="description" content="" />
     <link rel="stylesheet" href="./assets/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+      integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <script src="../Backend/script.js" defer></script>
   </head>
   <body>
@@ -19,14 +26,35 @@
       <h1>Sophie Bluel <span>Architecte d'intérieur</span></h1>
       <nav>
         <ul>
-          <li>projets</li>
-          <li>contact</li>
-          <li><a href="login.html" target="_blank">login</a></li>
+          <li><a href="#portfolio">projets</a></li>
+          <li><a href="#contact">contact</a></li>
+          <li>
+            <a href="login.html" target="_blank" id="login-link">login</a>
+          </li>
+          <li><a href="#" id="logout-link">logout</a></li>
           <li><img src="./assets/icons/instagram.png" alt="Instagram" /></li>
         </ul>
       </nav>
     </header>
     <main>
+      <!-- Modal Structure -->
+      <div id="myModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <!-- Header content goes here -->
+            <span id="closeModalBtn" class="close-btn">&times;</span>
+          </div>
+          <div class="modal-body">
+            <!-- Body content goes here -->
+            <div class="modal-title"></div>
+            <div class="modal-gallery"></div>
+          </div>
+          <div class="modal-footer">
+            <!-- Footer content goes here -->
+            <div class="add-photo"></div>
+          </div>
+        </div>
+      </div>
       <section id="introduction">
         <figure>
           <img src="./assets/images/sophie-bluel.png" alt="" />
@@ -51,7 +79,10 @@
         </article>
       </section>
       <section id="portfolio">
-        <h2>Mes Projets</h2>
+        <div class="projet-plus-mod">
+          <h2>Mes Projets</h2>
+          <div class="btn-modifier"></div>
+        </div>
         <div class="section-filtres"></div>
         <div class="gallery"></div>
       </section>

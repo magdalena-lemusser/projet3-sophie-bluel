@@ -127,6 +127,7 @@ table {
   border-collapse: collapse;
   border-spacing: 0;
 }
+
 /** end reset css**/
 body {
   max-width: 1140px;
@@ -201,10 +202,19 @@ nav li {
 /*ADDED A LINK TO THE LOGIN PAGE*/
 nav a {
   text-decoration: none; /*ok to keep this for both index+login pages cause same styling for links*/
+  color: black;
+}
+
+nav a:hover {
+  color: #b1663c;
 }
 
 nav a:visited {
   color: inherit;
+}
+
+#logout-link {
+  display: none;
 }
 
 /*STYLING THE LOGIN PAGE*/
@@ -306,10 +316,7 @@ li:hover {
 #introduction p {
   margin-bottom: 0.5em;
 }
-#portfolio h2 {
-  text-align: center;
-  margin-bottom: 1em;
-}
+
 .gallery {
   width: 100%;
   display: grid;
@@ -367,4 +374,134 @@ footer nav ul {
   display: flex;
   justify-content: flex-end;
   margin: 2em;
+}
+
+/*EDITOR MODE PAGE*/
+
+.admin-banner {
+  background-color: black;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+}
+
+.projet-plus-mod {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 1em;
+}
+
+.edit-btn {
+  border: none;
+  background-color: inherit;
+  font-family: inherit;
+}
+
+.hidden {
+  display: none;
+}
+
+.edit-page-margins {
+  margin-top: 80px;
+}
+
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1000; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0, 0, 0); /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 40% auto; /* 40% from the top and centered */
+  padding: 30px;
+  border: 1px solid #888;
+  width: 40%; /* Could be more or less, depending on screen size */
+  border-radius: 10px;
+}
+
+.modal-body {
+  padding: 20px;
+}
+/* The Close Button */
+.close-btn {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modal-title {
+  font-weight: 400;
+  font-size: 26px;
+  text-align: center;
+}
+
+.modal-gallery {
+  margin: 10% auto;
+  width: 80%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-column-gap: 20px;
+  grid-row-gap: 20px;
+}
+
+.modal-gallery img {
+  width: 100%;
+}
+
+.modal-figure {
+  position: relative;
+  display: inline-block;
+}
+
+.modal-footer {
+  width: 80%;
+  border-top: 1px solid #b3b3b3;
+  margin: auto;
+  padding-top: 30px;
+}
+
+.trash-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  border: none;
+  background-color: black;
+  color: white;
+  padding: 5px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.add-photo button {
+  background-color: #1d6154;
+  border: 2px solid #1d6154;
+  color: white;
+  padding: 10px;
+  font-family: "Syne";
+  border-radius: 20px;
+  min-width: 200px;
+  display: block;
+  margin: auto;
 }

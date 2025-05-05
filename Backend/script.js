@@ -4,10 +4,10 @@ let gallery = document.querySelector(".gallery");
 //selecting the DOM place for adding the filter buttons
 let sectionFiltres = document.querySelector(".section-filtres");
 
-// 1.declare WORKS as a global variable (filled ulteriourly inside the FETCH function)
+// 1.declare WORKS as a global variable (replaced ulteriourly inside the FETCH function)
 let works = [];
 
-//1.1 declare CATEGORIES as a global variable (filled ulteriourly insite the FETCH function)
+//1.1 declare CATEGORIES as a global variable (replaced ulteriourly inside the FETCH function)
 let categories = [];
 
 // 2. Fetching the WORKS from the API
@@ -16,6 +16,7 @@ const fetchWorks = async () => {
     const response = await fetch("http://localhost:5678/api/works");
     works = await response.json(); //defining the values of the global WORKS variable
     displayWorks(works); //passing down the works array to the displayWorks function so it knows what to work with!
+    displayWorksModal(works); //dislaying works within the modal!
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
@@ -38,9 +39,10 @@ const fetchCategories = async () => {
 // 3. Fonction CREATEFIGURE - handles the HTML for each figure
 
 function createFigure({ imageUrl, title }) {
+  //I could also just give it one paramenter WORK and then use work.imageUrl and work.title in the inner HTML
   const figure = document.createElement("figure");
   figure.innerHTML = `
-      <img src="${imageUrl}" alt="${title}" />
+      <img src="${imageUrl}" alt="${title}" /> 
       <figcaption>${title}</figcaption>
     `;
   return figure;
@@ -99,15 +101,13 @@ if (loginForm) {
   //THIS CODE ONLY RUNS IF THERE IS AN ELEMENT WITH ID LOGIN FORM
   document
     .getElementById("login-form")
-    .addEventListener("submit", async function (e) {
-      e.preventDefault(); // Stop form from reloading the page
+    .addEventListener("submit", async (event) => {
+      event.preventDefault(); // Stop form from reloading the page
 
       const email = document.getElementById("email").value.trim(); //makes sure the user sends a CLEAN STRING
       const password = document.getElementById("password").value.trim();
       const errorElement = document.getElementById("error-message");
-      errorElement.textContent = "";
-
-      //Error message.
+      errorElement.textContent = ""; //deletes the previous error message
 
       if (!email || !password) {
         //if the email or password are EMPTY
@@ -124,10 +124,10 @@ if (loginForm) {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password }), //This works only if the key names and variable names are the same.
         });
 
-        const data = await response.json();
+        const data = await response.json(); //turns raw JSON into a JS object (data).
 
         //login failure
         if (!response.ok) {
@@ -138,7 +138,7 @@ if (loginForm) {
         }
 
         //login success
-        localStorage.setItem("user", JSON.stringify(data)); // Saves this info as a string in the browser storage under the name USER
+        localStorage.setItem("token", JSON.stringify(data.token)); // Saves ONLY the token data as a string in the browser storage under the name USER
         window.location.href = "../FrontEnd/index.html"; // 🎉 redirect
       } catch (err) {
         console.error("Erreur d'authentification:", err);
@@ -146,4 +146,110 @@ if (loginForm) {
           "Erreur d'authentification. Veuillez reessayer.";
       }
     });
+}
+
+const token = JSON.parse(localStorage.getItem("token")); //turns the string I got with .setItem into an object
+
+if (token) {
+  activateEditorMode();
+}
+
+function activateEditorMode() {
+  // Show an admin banner
+  const banner = document.createElement("div");
+  banner.className = "admin-banner";
+  banner.innerHTML = `<i class="fa-regular fa-pen-to-square"></i> Mode Édition`;
+  document.body.prepend(banner);
+
+  // Show edit buttons next to elements
+  const editBtn = document.createElement("button");
+  editBtn.innerHTML = `<i class="fa-regular fa-pen-to-square"></i> modifier`;
+  editBtn.classList.add("edit-btn");
+
+  const btnModifier = document.querySelector(".btn-modifier");
+  btnModifier.appendChild(editBtn);
+
+  // Hide login link, show logout
+  document.querySelector("#login-link").style.display = "none";
+  document.querySelector("#logout-link").style.display = "inline";
+
+  //get rid of the filter buttons!
+
+  sectionFiltres.classList.add("hidden");
+  gallery.classList.add("edit-page-margins");
+
+  // Logout link event listener!
+  const logoutLink = document.querySelector("#logout-link");
+  logoutLink.addEventListener("click", () => {
+    localStorage.removeItem("token");
+    location.reload(); // reload the page to return to normal mode
+  });
+
+  //ADDING THE MODAL WINDOW BABY
+  const modal = document.getElementById("myModal");
+  editBtn.addEventListener("click", () => {
+    modal.style.display = "block";
+  });
+
+  //closing the modal
+  prepareModal();
+  buildModalContents();
+}
+
+function prepareModal() {
+  const modal = document.getElementById("myModal");
+  const closeBtn = document.getElementById("closeModalBtn");
+
+  closeBtn.onclick = () => (modal.style.display = "none");
+
+  window.onclick = function (event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  };
+}
+
+function buildModalContents() {
+  modalTitle();
+  displayWorksModal(works);
+  addPhoto();
+}
+
+function modalTitle() {
+  const modalTitleDiv = document.querySelector(".modal-title");
+  const modalTitle = document.createElement("H3");
+  modalTitle.innerText = "Galerie Photo";
+  modalTitleDiv.appendChild(modalTitle);
+}
+
+function displayWorksModal(worksToDisplay) {
+  const modalGallery = document.querySelector(".modal-gallery");
+  modalGallery.innerHTML = ""; // clear previous items
+  worksToDisplay.forEach((work) => {
+    const figure = createFigureModal(work);
+    modalGallery.appendChild(figure);
+  });
+}
+
+function createFigureModal(work) {
+  //I could also just give it one paramenter WORK and then use work.imageUrl and work.title in the inner HTML
+  const figureModal = document.createElement("figure");
+  figureModal.classList.add("modal-figure");
+  figureModal.innerHTML = `
+      <img src="${work.imageUrl}" alt="${work.title}" /> 
+       <button class="trash-btn" data-id="${work.id}">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+      `;
+  return figureModal;
+}
+
+function addPhoto() {
+  const addPhotoBtn = document.createElement("button");
+  addPhotoBtn.innerText = "Ajouter une photo";
+  addPhotoBtn.classList.add("add-photo-btn");
+
+  const addPhotoDiv = document.querySelector(".add-photo");
+  addPhotoDiv.appendChild(addPhotoBtn);
+  return addPhotoBtn;
 }
