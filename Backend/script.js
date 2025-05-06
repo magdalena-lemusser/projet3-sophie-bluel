@@ -1,3 +1,6 @@
+//declaring a boolean flag
+let modalInitialized = false;
+
 // selecting the DOM place for adding the WORKS
 let gallery = document.querySelector(".gallery");
 
@@ -156,12 +159,35 @@ if (token) {
 
 function activateEditorMode() {
   // Show an admin banner
-  const banner = document.createElement("div");
-  banner.className = "admin-banner";
-  banner.innerHTML = `<i class="fa-regular fa-pen-to-square"></i> Mode Édition`;
-  document.body.prepend(banner);
+  showAdminBanner();
 
   // Show edit buttons next to elements
+  showEditButton();
+
+  // Hide login link, show logout
+  loginHidden();
+
+  //get rid of the filter buttons!
+  deleteFilterBtn();
+
+  // Logout link event listener!
+  removeUserToken();
+}
+
+function loginHidden() {
+  document.querySelector("#login-link").style.display = "none";
+  document.querySelector("#logout-link").style.display = "inline";
+}
+
+function removeUserToken() {
+  const logoutLink = document.querySelector("#logout-link");
+  logoutLink.addEventListener("click", () => {
+    localStorage.removeItem("token");
+    location.reload(); // reload the page to return to normal mode
+  });
+}
+
+function showEditButton() {
   const editBtn = document.createElement("button");
   editBtn.innerHTML = `<i class="fa-regular fa-pen-to-square"></i> modifier`;
   editBtn.classList.add("edit-btn");
@@ -169,61 +195,76 @@ function activateEditorMode() {
   const btnModifier = document.querySelector(".btn-modifier");
   btnModifier.appendChild(editBtn);
 
-  // Hide login link, show logout
-  document.querySelector("#login-link").style.display = "none";
-  document.querySelector("#logout-link").style.display = "inline";
+  editBtn.addEventListener("click", appearModal);
+}
 
-  //get rid of the filter buttons!
-
+function deleteFilterBtn() {
   sectionFiltres.classList.add("hidden");
   gallery.classList.add("edit-page-margins");
+}
 
-  // Logout link event listener!
-  const logoutLink = document.querySelector("#logout-link");
-  logoutLink.addEventListener("click", () => {
-    localStorage.removeItem("token");
-    location.reload(); // reload the page to return to normal mode
-  });
+function showAdminBanner() {
+  const banner = document.createElement("div");
+  banner.className = "admin-banner";
+  banner.innerHTML = `<i class="fa-regular fa-pen-to-square"></i> Mode Édition`;
+  document.body.prepend(banner);
+}
 
-  //ADDING THE MODAL WINDOW BABY
+function appearModal() {
   const modal = document.getElementById("myModal");
-  editBtn.addEventListener("click", () => {
-    modal.style.display = "block";
-  });
-
-  //closing the modal
+  modal.style.display = "block";
   prepareModal();
   buildModalContents();
 }
 
+//closing the modal
 function prepareModal() {
   const modal = document.getElementById("myModal");
   const closeBtn = document.getElementById("closeModalBtn");
-
-  closeBtn.onclick = () => (modal.style.display = "none");
-
+  closeBtn.onclick = closeModal;
   window.onclick = function (event) {
     if (event.target == modal) {
-      modal.style.display = "none";
+      closeModal();
     }
   };
 }
 
+function closeModal() {
+  const modal = document.getElementById("myModal");
+  modal.style.display = "none";
+  modalInitialized = false;
+  // clear only on close
+  document.querySelector(".file-upload-div").innerHTML = "";
+  document.querySelector(".back-btn-span").innerHTML = "";
+}
+
 function buildModalContents() {
-  modalTitle();
+  if (!modalInitialized) {
+    modalTitle();
+    addPhoto();
+    modalInitialized = true; //sets to true and skips these steps afterwards
+  }
   displayWorksModal(works);
-  addPhoto();
 }
 
 function modalTitle() {
   const modalTitleDiv = document.querySelector(".modal-title");
+  modalTitleDiv.innerHTML = ""; // clear previous items
   const modalTitle = document.createElement("H3");
   modalTitle.innerText = "Galerie Photo";
   modalTitleDiv.appendChild(modalTitle);
 }
 
 function displayWorksModal(worksToDisplay) {
-  const modalGallery = document.querySelector(".modal-gallery");
+  let modalGallery = document.querySelector(".modal-gallery");
+
+  // If it doesn't exist anymore (e.g. first time opening), create it
+  if (!modalGallery) {
+    modalGallery = document.createElement("div");
+    modalGallery.classList.add("modal-gallery");
+    const modalBody = document.querySelector(".modal-body");
+    modalBody.appendChild(modalGallery);
+  }
   modalGallery.innerHTML = ""; // clear previous items
   worksToDisplay.forEach((work) => {
     const figure = createFigureModal(work);
@@ -232,7 +273,6 @@ function displayWorksModal(worksToDisplay) {
 }
 
 function createFigureModal(work) {
-  //I could also just give it one paramenter WORK and then use work.imageUrl and work.title in the inner HTML
   const figureModal = document.createElement("figure");
   figureModal.classList.add("modal-figure");
   figureModal.innerHTML = `
@@ -245,11 +285,101 @@ function createFigureModal(work) {
 }
 
 function addPhoto() {
+  const addPhotoDiv = document.querySelector(".add-photo");
+  addPhotoDiv.innerHTML = ""; // Clear existing button
   const addPhotoBtn = document.createElement("button");
   addPhotoBtn.innerText = "Ajouter une photo";
   addPhotoBtn.classList.add("add-photo-btn");
-
-  const addPhotoDiv = document.querySelector(".add-photo");
   addPhotoDiv.appendChild(addPhotoBtn);
-  return addPhotoBtn;
+  addPhotoBtn.addEventListener("click", uploadFormView);
+}
+
+function uploadFormView() {
+  backBtn();
+  uploadFormTitle();
+  hidingGallery();
+  fileUploadView();
+}
+
+function backBtn() {
+  const backBtnSpan = document.querySelector(".back-btn-span");
+  backBtnSpan.innerHTML = "";
+  const backBtnArrow = document.createElement("button");
+  backBtnArrow.innerText = "←";
+  backBtnSpan.appendChild(backBtnArrow);
+}
+
+function hidingGallery() {
+  const modalGallery = document.querySelector(".modal-gallery");
+  modalGallery.remove();
+}
+
+function uploadFormTitle() {
+  const modalTitleDiv = document.querySelector(".modal-title");
+  modalTitleDiv.innerHTML = ""; // clear previous items
+  const modalTitle = document.createElement("H3");
+  modalTitle.innerText = "Ajout photo";
+  modalTitleDiv.appendChild(modalTitle);
+}
+
+function fileUploadView() {
+  fileUploadForm();
+  uploadFormContents();
+}
+
+//handles the upload file button!
+
+function uploadFormContents() {
+  //upload form icon
+  const uploadInputIcon = document.querySelector(".upload-input-icon");
+  uploadInputIcon.innerHTML = `<i class="fa-regular fa-image"></i>`;
+
+  //Upload form icon/file upload/text
+  const fileUploadInput = document.querySelector(".upload-input-btn");
+
+  const inputTypeFile = document.createElement("input");
+  inputTypeFile.type = "file";
+
+  inputTypeFile.id = "fileUpload"; // must match label's 'for'
+  inputTypeFile.style.display = "none";
+
+  const fileInputLabel = document.createElement("label");
+  fileInputLabel.setAttribute("for", "fileUpload");
+  fileInputLabel.classList.add("cute-upload-btn");
+  fileInputLabel.innerText = "+ Ajouter photo";
+
+  fileUploadInput.appendChild(inputTypeFile);
+  fileUploadInput.appendChild(fileInputLabel);
+
+  const inputTextDiv = document.querySelector(".upload-input-text");
+  const fileInputText = document.createElement("span");
+  fileInputText.innerText = "jpg, png : 4mo max";
+  inputTextDiv.appendChild(fileInputText);
+}
+
+//creates full form div
+function fileUploadForm() {
+  const existingUploadDiv = document.querySelector(".file-upload-div");
+  if (existingUploadDiv) {
+    existingUploadDiv.remove(); // get rid of the old one before creating new
+  }
+
+  const fileUploadDiv = document.createElement("div");
+  fileUploadDiv.classList.add("file-upload-div");
+  const modalBody = document.querySelector(".modal-body");
+  modalBody.appendChild(fileUploadDiv);
+  fileUploadDiv.innerHTML = ""; // not really needed here since it's new
+
+  const fileUploadForm = document.createElement("form");
+  fileUploadForm.classList.add("file-upload-form");
+  fileUploadForm.innerHTML = `
+    <div class="file-upload-input">
+      <div class="upload-input-icon"></div>
+      <div class="upload-input-btn"></div>
+      <div class="upload-input-text"></div>
+    </div>
+    <div class="file-title-input"></div>
+    <div class="file-category-input"></div>
+  `;
+  fileUploadDiv.appendChild(fileUploadForm);
 }
