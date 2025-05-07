@@ -34,6 +34,7 @@ const fetchCategories = async () => {
     const allCategory = { id: 0, name: "Tous" }; // Adds the "All" category manually first so it appears first!
     const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
     appendButtons(allCategories); //passing down the allCategories array to the appendButtons function so it knows what to work with!
+    fileCategoryOptions(categories);
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
@@ -234,6 +235,9 @@ function closeModal() {
   modal.style.display = "none";
   modalInitialized = false;
   // clear only on close
+
+  resetModalState(); // ← Add this line
+
   document.querySelector(".file-upload-div").innerHTML = "";
   document.querySelector(".back-btn-span").innerHTML = "";
 }
@@ -245,6 +249,15 @@ function buildModalContents() {
     modalInitialized = true; //sets to true and skips these steps afterwards
   }
   displayWorksModal(works);
+  hidingElementIfExists();
+}
+
+//this is just a silly function I added cause I kept getting the file title/select category popping up in the main modal view
+function hidingElementIfExists() {
+  const existingTextForm = document.querySelector(".file-upload-form");
+  if (existingTextForm) {
+    existingTextForm.remove(); // get rid of the old one before creating new
+  }
 }
 
 function modalTitle() {
@@ -285,8 +298,16 @@ function createFigureModal(work) {
 }
 
 function addPhoto() {
-  const addPhotoDiv = document.querySelector(".add-photo");
-  addPhotoDiv.innerHTML = ""; // Clear existing button
+  // If it doesn't exist anymore (e.g. first time opening), create it
+  let addPhotoDiv = document.querySelector(".add-photo");
+
+  if (!addPhotoDiv) {
+    addPhotoDiv = document.createElement("div");
+    addPhotoDiv.classList.add("add-photo");
+    const modalBody = document.querySelector(".modal-body");
+    modalBody.appendChild(addPhotoDiv);
+  }
+
   const addPhotoBtn = document.createElement("button");
   addPhotoBtn.innerText = "Ajouter une photo";
   addPhotoBtn.classList.add("add-photo-btn");
@@ -294,18 +315,32 @@ function addPhoto() {
   addPhotoBtn.addEventListener("click", uploadFormView);
 }
 
+function resetModalState() {
+  const addPhotoBtn = document.querySelector(".add-photo");
+
+  if (addPhotoBtn) {
+    addPhotoBtn.innerHTML = "";
+    addPhotoBtn.style.display = "block";
+  }
+}
+
+//THIS ONE HANDLES THE ENTIRE UPLOAD VIEW
 function uploadFormView() {
   backBtn();
   uploadFormTitle();
   hidingGallery();
   fileUploadView();
+  fileUploadTitle();
+  fileUploadCategory();
+  hidingAddPhoto();
+  submitFormInput();
 }
 
 function backBtn() {
   const backBtnSpan = document.querySelector(".back-btn-span");
   backBtnSpan.innerHTML = "";
   const backBtnArrow = document.createElement("button");
-  backBtnArrow.innerText = "←";
+  backBtnArrow.innerHTML = `<i class="fa-solid fa-arrow-left"></i>`;
   backBtnSpan.appendChild(backBtnArrow);
 }
 
@@ -322,6 +357,7 @@ function uploadFormTitle() {
   modalTitleDiv.appendChild(modalTitle);
 }
 
+//this one handles the upper part of the upload form -img-icon-input file
 function fileUploadView() {
   fileUploadForm();
   uploadFormContents();
@@ -357,7 +393,7 @@ function uploadFormContents() {
   inputTextDiv.appendChild(fileInputText);
 }
 
-//creates full form div
+//this one creates the html structure for the image upload form
 function fileUploadForm() {
   const existingUploadDiv = document.querySelector(".file-upload-div");
   if (existingUploadDiv) {
@@ -371,15 +407,90 @@ function fileUploadForm() {
   fileUploadDiv.innerHTML = ""; // not really needed here since it's new
 
   const fileUploadForm = document.createElement("form");
+  fileUploadForm.id = "upload-form-file";
   fileUploadForm.classList.add("file-upload-form");
   fileUploadForm.innerHTML = `
-    <div class="file-upload-input">
       <div class="upload-input-icon"></div>
       <div class="upload-input-btn"></div>
       <div class="upload-input-text"></div>
-    </div>
-    <div class="file-title-input"></div>
-    <div class="file-category-input"></div>
   `;
   fileUploadDiv.appendChild(fileUploadForm);
+}
+
+//upload file title function
+
+function fileUploadTitle() {
+  //title label
+  const fileUploadForm = document.querySelector(".file-upload-form");
+  const uploadTextLabel = document.createElement("label");
+  uploadTextLabel.setAttribute("for", "uploadTextTitle");
+  uploadTextLabel.innerText = "Title";
+  fileUploadForm.appendChild(uploadTextLabel);
+
+  //title input
+
+  const uploadTextInput = document.createElement("input");
+  uploadTextInput.type = "text";
+  uploadTextInput.classList.add("upload-text-input");
+  uploadTextInput.id = "uploadTextTitle";
+  fileUploadForm.appendChild(uploadTextInput);
+}
+
+// upload file category function
+function fileUploadCategory() {
+  //category label
+  const fileUploadForm = document.querySelector(".file-upload-form");
+  const uploadCategoryLabel = document.createElement("label");
+  uploadCategoryLabel.setAttribute("for", "uploadCategory");
+  uploadCategoryLabel.innerText = "Catégorie";
+  fileUploadForm.appendChild(uploadCategoryLabel);
+
+  //category select tag
+
+  const uploadCategorySelect = document.createElement("select");
+  uploadCategorySelect.id = "uploadCategory";
+  uploadCategorySelect.setAttribute("name", "categories");
+  uploadCategorySelect.classList.add("category-select");
+  fileUploadForm.appendChild(uploadCategorySelect);
+  fileCategoryOptions(categories);
+}
+
+//function for fetching the categories baby!
+
+function fileCategoryOptions(categories) {
+  const uploadCategorySelect = document.querySelector(".category-select");
+  // Add an initial empty option
+  const emptyOption = document.createElement("option");
+  emptyOption.value = "";
+  emptyOption.innerText = ""; // or "Choisissez une catégorie"
+  uploadCategorySelect.appendChild(emptyOption);
+
+  // Add the real categories
+  categories.forEach((category) => {
+    const categoryOption = createOption(category);
+    uploadCategorySelect.appendChild(categoryOption);
+  });
+}
+
+function createOption(category) {
+  const selectCategoryOption = document.createElement("option");
+  selectCategoryOption.setAttribute("value", category.id);
+  selectCategoryOption.innerText = `${category.name}`;
+  return selectCategoryOption;
+}
+
+function hidingAddPhoto() {
+  const addPhotoBtn = document.querySelector(".add-photo");
+  if (addPhotoBtn) {
+    addPhotoBtn.style.display = "none";
+  }
+}
+
+function submitFormInput() {
+  const fileUploadForm = document.querySelector(".file-upload-form");
+  const validerFormInput = document.createElement("input");
+  validerFormInput.classList.add("submit-form-input");
+  validerFormInput.innerText = "Valider";
+  validerFormInput.type = "submit";
+  fileUploadForm.appendChild(validerFormInput);
 }

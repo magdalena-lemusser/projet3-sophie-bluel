@@ -541,6 +541,8 @@ footer nav ul {
   float: left;
   font-size: 28px;
   font-weight: bold;
+  border: none;
+  background-color: inherit;
 }
 
 .back-btn-span button:hover,
