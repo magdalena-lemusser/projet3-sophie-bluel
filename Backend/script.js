@@ -10,7 +10,7 @@ let sectionFiltres = document.querySelector(".section-filtres");
 // 1.declare WORKS as a global variable (replaced ulteriourly inside the FETCH function)
 let works = [];
 
-//1.1 declare CATEGORIES as a global variable (replaced ulteriourly inside the FETCH function)
+//eviter les variables globales! en général - peut-etre garder maintenant
 let categories = [];
 
 // 2. Fetching the WORKS from the API
@@ -25,6 +25,8 @@ const fetchWorks = async () => {
   }
 };
 
+//change: methode init dès le debut pour faire une fonction globale!
+
 // 2. Fetching the CATEGORIES from the API + adding an "all" category
 const fetchCategories = async () => {
   try {
@@ -34,7 +36,6 @@ const fetchCategories = async () => {
     const allCategory = { id: 0, name: "Tous" }; // Adds the "All" category manually first so it appears first!
     const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
     appendButtons(allCategories); //passing down the allCategories array to the appendButtons function so it knows what to work with!
-    fileCategoryOptions(categories);
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
@@ -218,7 +219,7 @@ function appearModal() {
   buildModalContents();
 }
 
-//closing the modal
+//closing the modal - this should be called only once at the end when the DOM is fully charged - OPTIMIZATION PROBLEM
 function prepareModal() {
   const modal = document.getElementById("myModal");
   const closeBtn = document.getElementById("closeModalBtn");
@@ -372,12 +373,13 @@ function uploadFormContents() {
 
   //Upload form icon/file upload/text
   const fileUploadInput = document.querySelector(".upload-input-btn");
-
   const inputTypeFile = document.createElement("input");
   inputTypeFile.type = "file";
+  inputTypeFile.addEventListener("change", handleImagePreview);
 
   inputTypeFile.id = "fileUpload"; // must match label's 'for'
   inputTypeFile.style.display = "none";
+  inputTypeFile.setAttribute("name", "image");
 
   const fileInputLabel = document.createElement("label");
   fileInputLabel.setAttribute("for", "fileUpload");
@@ -393,7 +395,26 @@ function uploadFormContents() {
   inputTextDiv.appendChild(fileInputText);
 }
 
-//this one creates the html structure for the image upload form
+function handleImagePreview(event) {
+  const file = event.target.files[0];
+  const previewContainer = document.querySelector(".upload-input-icon");
+
+  if (!file || !file.type.startsWith("image/")) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    previewContainer.innerHTML = `
+      <img src="${e.target.result}" alt="Image preview" class="image-preview" />
+    `;
+    // Optional: hide file input after image is chosen
+    document.querySelector(".cute-upload-btn").style.display = "none";
+  };
+
+  reader.readAsDataURL(file);
+}
+
+//this one creates the html structure for the image upload form - plus adds the EVENT LISTENER DIRECTLY TO IT
 function fileUploadForm() {
   const existingUploadDiv = document.querySelector(".file-upload-div");
   if (existingUploadDiv) {
@@ -409,12 +430,79 @@ function fileUploadForm() {
   const fileUploadForm = document.createElement("form");
   fileUploadForm.id = "upload-form-file";
   fileUploadForm.classList.add("file-upload-form");
+  fileUploadForm.setAttribute("enctype", "multipart/form-data");
+  fileUploadForm.setAttribute("method", "POST");
+
   fileUploadForm.innerHTML = `
-      <div class="upload-input-icon"></div>
-      <div class="upload-input-btn"></div>
-      <div class="upload-input-text"></div>
+      <div class="image-upload-div">  
+        <div class="upload-input-icon"></div>
+        <div class="upload-input-btn"></div>
+        <div class="upload-input-text"></div>
+      </div>
   `;
+
   fileUploadDiv.appendChild(fileUploadForm);
+
+  fileUploadForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    console.log("Submitting form...");
+
+    const fileInput = document.querySelector("#fileUpload");
+    const titleInput = document.querySelector("#uploadTextTitle");
+    const categorySelect = document.querySelector("#uploadCategory");
+
+    const file = fileInput?.files[0];
+    const title = titleInput?.value.trim();
+    const category = categorySelect?.value.trim();
+
+    const errorElement = document.getElementById("error-message");
+    if (errorElement) errorElement.textContent = "";
+
+    if (!file) {
+      alert("Please choose a file to upload.");
+      return;
+    }
+
+    if (!title) {
+      alert("Please enter a title.");
+      return;
+    }
+
+    if (!category) {
+      alert("Please choose a category.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("title", title);
+    formData.append("category", category);
+
+    try {
+      const response = await fetch("http://localhost:5678/api/works", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload work.");
+      }
+
+      const result = await response.json();
+      console.log("Upload successful!", result);
+
+      fileUploadForm.reset();
+      if (typeof resetModalState === "function") resetModalState();
+    } catch (err) {
+      console.error("Error uploading work:", err);
+      alert("Something went wrong while uploading. Please try again.");
+    }
+    return false; // 🔧 Might help avoid unexpected reloads
+  });
 }
 
 //upload file title function
@@ -433,6 +521,7 @@ function fileUploadTitle() {
   uploadTextInput.type = "text";
   uploadTextInput.classList.add("upload-text-input");
   uploadTextInput.id = "uploadTextTitle";
+  uploadTextInput.setAttribute("name", "title");
   fileUploadForm.appendChild(uploadTextInput);
 }
 
@@ -455,7 +544,7 @@ function fileUploadCategory() {
   fileCategoryOptions(categories);
 }
 
-//function for fetching the categories baby!
+//function for fetching the categories in the select form
 
 function fileCategoryOptions(categories) {
   const uploadCategorySelect = document.querySelector(".category-select");
@@ -490,7 +579,7 @@ function submitFormInput() {
   const fileUploadForm = document.querySelector(".file-upload-form");
   const validerFormInput = document.createElement("input");
   validerFormInput.classList.add("submit-form-input");
-  validerFormInput.innerText = "Valider";
+  validerFormInput.value = "Valider";
   validerFormInput.type = "submit";
   fileUploadForm.appendChild(validerFormInput);
 }
