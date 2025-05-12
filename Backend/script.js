@@ -1,6 +1,3 @@
-//declaring a boolean flag
-let modalInitialized = false;
-
 // selecting the DOM place for adding the WORKS
 let gallery = document.querySelector(".gallery");
 
@@ -212,6 +209,9 @@ function showAdminBanner() {
   document.body.prepend(banner);
 }
 
+let modalStage = "gallery";
+let modalInitialized = false;
+
 function appearModal() {
   const modal = document.getElementById("myModal");
   modal.style.display = "block";
@@ -219,15 +219,14 @@ function appearModal() {
   buildModalContents();
 }
 
-//closing the modal - this should be called only once at the end when the DOM is fully charged - OPTIMIZATION PROBLEM
 function prepareModal() {
   const modal = document.getElementById("myModal");
   const closeBtn = document.getElementById("closeModalBtn");
+
   closeBtn.onclick = closeModal;
-  window.onclick = function (event) {
-    if (event.target == modal) {
-      closeModal();
-    }
+
+  window.onclick = (event) => {
+    if (event.target === modal) closeModal();
   };
 }
 
@@ -235,351 +234,255 @@ function closeModal() {
   const modal = document.getElementById("myModal");
   modal.style.display = "none";
   modalInitialized = false;
-  // clear only on close
 
-  resetModalState(); // ← Add this line
+  resetModalState();
+  clearElement(".file-upload-div");
+  clearElement(".back-btn-span");
+}
 
-  document.querySelector(".file-upload-div").innerHTML = "";
-  document.querySelector(".back-btn-span").innerHTML = "";
+function resetModalState() {
+  modalStage = "gallery";
 }
 
 function buildModalContents() {
   if (!modalInitialized) {
-    modalTitle();
-    addPhoto();
-    modalInitialized = true; //sets to true and skips these steps afterwards
+    setModalTitle("Galerie Photo");
+    modalInitialized = true;
   }
+
   displayWorksModal(works);
-  hidingElementIfExists();
+  createAddPhotoButton();
+  removeOldUploadForm();
 }
 
-//this is just a silly function I added cause I kept getting the file title/select category popping up in the main modal view
-function hidingElementIfExists() {
-  const existingTextForm = document.querySelector(".file-upload-form");
-  if (existingTextForm) {
-    existingTextForm.remove(); // get rid of the old one before creating new
-  }
+function setModalTitle(text) {
+  const titleDiv = document.querySelector(".modal-title");
+  titleDiv.innerHTML = "";
+  const title = document.createElement("h3");
+  title.innerText = text;
+  titleDiv.appendChild(title);
 }
 
-function modalTitle() {
-  const modalTitleDiv = document.querySelector(".modal-title");
-  modalTitleDiv.innerHTML = ""; // clear previous items
-  const modalTitle = document.createElement("H3");
-  modalTitle.innerText = "Galerie Photo";
-  modalTitleDiv.appendChild(modalTitle);
+function removeOldUploadForm() {
+  const form = document.querySelector(".file-upload-form");
+  if (form) form.remove();
 }
 
 function displayWorksModal(worksToDisplay) {
-  let modalGallery = document.querySelector(".modal-gallery");
+  let gallery = document.querySelector(".modal-gallery");
 
-  // If it doesn't exist anymore (e.g. first time opening), create it
-  if (!modalGallery) {
-    modalGallery = document.createElement("div");
-    modalGallery.classList.add("modal-gallery");
-    const modalBody = document.querySelector(".modal-body");
-    modalBody.appendChild(modalGallery);
+  if (!gallery) {
+    gallery = document.createElement("div");
+    gallery.classList.add("modal-gallery");
+    document.querySelector(".modal-body").appendChild(gallery);
   }
-  modalGallery.innerHTML = ""; // clear previous items
+
+  gallery.innerHTML = "";
   worksToDisplay.forEach((work) => {
-    const figure = createFigureModal(work);
-    modalGallery.appendChild(figure);
+    gallery.appendChild(createFigureModal(work));
   });
 }
 
 function createFigureModal(work) {
-  const figureModal = document.createElement("figure");
-  figureModal.classList.add("modal-figure");
-  figureModal.innerHTML = `
-      <img src="${work.imageUrl}" alt="${work.title}" /> 
-       <button class="trash-btn" data-id="${work.id}">
+  const figure = document.createElement("figure");
+  figure.classList.add("modal-figure");
+  figure.innerHTML = `
+    <img src="${work.imageUrl}" alt="${work.title}" />
+    <button class="trash-btn" data-id="${work.id}">
       <i class="fa-solid fa-trash"></i>
     </button>
-      `;
-  return figureModal;
+  `;
+  return figure;
 }
 
-function addPhoto() {
-  // If it doesn't exist anymore (e.g. first time opening), create it
-  let addPhotoDiv = document.querySelector(".add-photo");
+function createAddPhotoButton() {
+  clearElement(".add-photo");
 
-  if (!addPhotoDiv) {
-    addPhotoDiv = document.createElement("div");
-    addPhotoDiv.classList.add("add-photo");
-    const modalBody = document.querySelector(".modal-body");
-    modalBody.appendChild(addPhotoDiv);
-  }
+  const addDiv = document.createElement("div");
+  addDiv.classList.add("add-photo");
 
-  const addPhotoBtn = document.createElement("button");
-  addPhotoBtn.innerText = "Ajouter une photo";
-  addPhotoBtn.classList.add("add-photo-btn");
-  addPhotoDiv.appendChild(addPhotoBtn);
-  addPhotoBtn.addEventListener("click", uploadFormView);
+  const button = document.createElement("button");
+  button.classList.add("add-photo-btn");
+  button.innerText = "Ajouter une photo";
+  button.addEventListener("click", uploadFormView);
+
+  addDiv.appendChild(button);
+  document.querySelector(".modal-body").appendChild(addDiv);
 }
 
-function resetModalState() {
-  const addPhotoBtn = document.querySelector(".add-photo");
-
-  if (addPhotoBtn) {
-    addPhotoBtn.innerHTML = "";
-    addPhotoBtn.style.display = "block";
-  }
+function clearElement(selector) {
+  const el = document.querySelector(selector);
+  if (el) el.innerHTML = "";
 }
 
-//THIS ONE HANDLES THE ENTIRE UPLOAD VIEW
 function uploadFormView() {
-  backBtn();
-  uploadFormTitle();
-  hidingGallery();
-  fileUploadView();
-  fileUploadTitle();
-  fileUploadCategory();
-  hidingAddPhoto();
-  submitFormInput();
+  removeGallery();
+  setModalTitle("Ajout photo");
+  renderUploadForm();
+  addUploadTitleInput();
+  addUploadCategorySelect();
+  addSubmitButton();
+
+  modalStage = "upload";
 }
 
-function backBtn() {
-  const backBtnSpan = document.querySelector(".back-btn-span");
-  backBtnSpan.innerHTML = "";
-  const backBtnArrow = document.createElement("button");
-  backBtnArrow.innerHTML = `<i class="fa-solid fa-arrow-left"></i>`;
-  backBtnSpan.appendChild(backBtnArrow);
+function removeGallery() {
+  const gallery = document.querySelector(".modal-gallery");
+  if (gallery) gallery.remove();
 }
 
-function hidingGallery() {
-  const modalGallery = document.querySelector(".modal-gallery");
-  modalGallery.remove();
+function renderUploadForm() {
+  const addPhotoBtn = document.querySelector(".add-photo");
+  if (addPhotoBtn) addPhotoBtn.remove();
+  const oldDiv = document.querySelector(".file-upload-div");
+  if (oldDiv) oldDiv.remove();
+
+  const container = document.createElement("div");
+  container.classList.add("file-upload-div");
+  document.querySelector(".modal-body").appendChild(container);
+
+  const form = document.createElement("form");
+  form.id = "upload-form-file";
+  form.classList.add("file-upload-form");
+  form.setAttribute("enctype", "multipart/form-data");
+  form.setAttribute("method", "POST");
+
+  form.innerHTML = `
+    <div class="image-upload-div">
+      <div class="upload-input-icon"></div>
+      <div class="upload-input-btn"></div>
+      <div class="upload-input-text"></div>
+    </div>
+  `;
+
+  form.addEventListener("submit", handleFormSubmit);
+  container.appendChild(form);
+  createFileInputElements();
 }
 
-function uploadFormTitle() {
-  const modalTitleDiv = document.querySelector(".modal-title");
-  modalTitleDiv.innerHTML = ""; // clear previous items
-  const modalTitle = document.createElement("H3");
-  modalTitle.innerText = "Ajout photo";
-  modalTitleDiv.appendChild(modalTitle);
-}
+function createFileInputElements() {
+  const iconDiv = document.querySelector(".upload-input-icon");
+  const btnDiv = document.querySelector(".upload-input-btn");
+  const textDiv = document.querySelector(".upload-input-text");
 
-//this one handles the upper part of the upload form -img-icon-input file
-function fileUploadView() {
-  fileUploadForm();
-  uploadFormContents();
-}
+  iconDiv.innerHTML = `<i class="fa-regular fa-image"></i>`;
 
-//handles the upload file button!
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.id = "fileUpload";
+  fileInput.name = "image";
+  fileInput.style.display = "none";
+  fileInput.addEventListener("change", handleImagePreview);
 
-function uploadFormContents() {
-  //upload form icon
-  const uploadInputIcon = document.querySelector(".upload-input-icon");
-  uploadInputIcon.innerHTML = `<i class="fa-regular fa-image"></i>`;
+  const label = document.createElement("label");
+  label.setAttribute("for", "fileUpload");
+  label.classList.add("cute-upload-btn");
+  label.innerText = "+ Ajouter photo";
 
-  //Upload form icon/file upload/text
-  const fileUploadInput = document.querySelector(".upload-input-btn");
-  const inputTypeFile = document.createElement("input");
-  inputTypeFile.type = "file";
-  inputTypeFile.addEventListener("change", handleImagePreview);
+  btnDiv.appendChild(fileInput);
+  btnDiv.appendChild(label);
 
-  inputTypeFile.id = "fileUpload"; // must match label's 'for'
-  inputTypeFile.style.display = "none";
-  inputTypeFile.setAttribute("name", "image");
-
-  const fileInputLabel = document.createElement("label");
-  fileInputLabel.setAttribute("for", "fileUpload");
-  fileInputLabel.classList.add("cute-upload-btn");
-  fileInputLabel.innerText = "+ Ajouter photo";
-
-  fileUploadInput.appendChild(inputTypeFile);
-  fileUploadInput.appendChild(fileInputLabel);
-
-  const inputTextDiv = document.querySelector(".upload-input-text");
-  const fileInputText = document.createElement("span");
-  fileInputText.innerText = "jpg, png : 4mo max";
-  inputTextDiv.appendChild(fileInputText);
+  const note = document.createElement("span");
+  note.innerText = "jpg, png : 4mo max";
+  textDiv.appendChild(note);
 }
 
 function handleImagePreview(event) {
+  modalStage = "preview";
   const file = event.target.files[0];
   const previewContainer = document.querySelector(".upload-input-icon");
 
   if (!file || !file.type.startsWith("image/")) return;
 
   const reader = new FileReader();
-
-  reader.onload = function (e) {
-    previewContainer.innerHTML = `
-      <img src="${e.target.result}" alt="Image preview" class="image-preview" />
-    `;
-    // Optional: hide file input after image is chosen
+  reader.onload = (e) => {
+    previewContainer.innerHTML = `<img src="${e.target.result}" alt="Image preview" class="image-preview" />`;
     document.querySelector(".cute-upload-btn").style.display = "none";
   };
-
   reader.readAsDataURL(file);
 }
 
-//this one creates the html structure for the image upload form - plus adds the EVENT LISTENER DIRECTLY TO IT
-function fileUploadForm() {
-  const existingUploadDiv = document.querySelector(".file-upload-div");
-  if (existingUploadDiv) {
-    existingUploadDiv.remove(); // get rid of the old one before creating new
-  }
+function addUploadTitleInput() {
+  const form = document.querySelector(".file-upload-form");
 
-  const fileUploadDiv = document.createElement("div");
-  fileUploadDiv.classList.add("file-upload-div");
-  const modalBody = document.querySelector(".modal-body");
-  modalBody.appendChild(fileUploadDiv);
-  fileUploadDiv.innerHTML = ""; // not really needed here since it's new
+  const label = document.createElement("label");
+  label.setAttribute("for", "uploadTextTitle");
+  label.innerText = "Title";
+  form.appendChild(label);
 
-  const fileUploadForm = document.createElement("form");
-  fileUploadForm.id = "upload-form-file";
-  fileUploadForm.classList.add("file-upload-form");
-  fileUploadForm.setAttribute("enctype", "multipart/form-data");
-  fileUploadForm.setAttribute("method", "POST");
+  const input = document.createElement("input");
+  input.type = "text";
+  input.id = "uploadTextTitle";
+  input.name = "title";
+  input.classList.add("upload-text-input");
+  form.appendChild(input);
+}
 
-  fileUploadForm.innerHTML = `
-      <div class="image-upload-div">  
-        <div class="upload-input-icon"></div>
-        <div class="upload-input-btn"></div>
-        <div class="upload-input-text"></div>
-      </div>
+function addUploadCategorySelect() {
+  const form = document.querySelector(".file-upload-form");
+
+  const label = document.createElement("label");
+  label.setAttribute("for", "uploadCategory");
+  label.innerText = "Catégorie";
+  form.appendChild(label);
+
+  const select = document.createElement("select");
+  select.id = "uploadCategory";
+  select.name = "category";
+  select.innerHTML = `
+    <option value=""></option>
+    <option value="1">Objets</option>
+    <option value="2">Appartements</option>
+    <option value="3">Hôtels & restaurants</option>
   `;
-
-  fileUploadDiv.appendChild(fileUploadForm);
-
-  fileUploadForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    console.log("Submitting form...");
-
-    const fileInput = document.querySelector("#fileUpload");
-    const titleInput = document.querySelector("#uploadTextTitle");
-    const categorySelect = document.querySelector("#uploadCategory");
-
-    const file = fileInput?.files[0];
-    const title = titleInput?.value.trim();
-    const category = categorySelect?.value.trim();
-
-    const errorElement = document.getElementById("error-message");
-    if (errorElement) errorElement.textContent = "";
-
-    if (!file) {
-      alert("Please choose a file to upload.");
-      return;
-    }
-
-    if (!title) {
-      alert("Please enter a title.");
-      return;
-    }
-
-    if (!category) {
-      alert("Please choose a category.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("title", title);
-    formData.append("category", category);
-
-    try {
-      const response = await fetch("http://localhost:5678/api/works", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload work.");
-      }
-
-      const result = await response.json();
-      console.log("Upload successful!", result);
-
-      fileUploadForm.reset();
-      if (typeof resetModalState === "function") resetModalState();
-    } catch (err) {
-      console.error("Error uploading work:", err);
-      alert("Something went wrong while uploading. Please try again.");
-    }
-    return false; // 🔧 Might help avoid unexpected reloads
-  });
+  form.appendChild(select);
 }
 
-//upload file title function
+function addSubmitButton() {
+  const form = document.querySelector(".file-upload-form");
 
-function fileUploadTitle() {
-  //title label
-  const fileUploadForm = document.querySelector(".file-upload-form");
-  const uploadTextLabel = document.createElement("label");
-  uploadTextLabel.setAttribute("for", "uploadTextTitle");
-  uploadTextLabel.innerText = "Title";
-  fileUploadForm.appendChild(uploadTextLabel);
-
-  //title input
-
-  const uploadTextInput = document.createElement("input");
-  uploadTextInput.type = "text";
-  uploadTextInput.classList.add("upload-text-input");
-  uploadTextInput.id = "uploadTextTitle";
-  uploadTextInput.setAttribute("name", "title");
-  fileUploadForm.appendChild(uploadTextInput);
+  const button = document.createElement("button");
+  button.type = "submit";
+  button.classList.add("submit-btn");
+  button.innerText = "Valider";
+  form.appendChild(button);
 }
 
-// upload file category function
-function fileUploadCategory() {
-  //category label
-  const fileUploadForm = document.querySelector(".file-upload-form");
-  const uploadCategoryLabel = document.createElement("label");
-  uploadCategoryLabel.setAttribute("for", "uploadCategory");
-  uploadCategoryLabel.innerText = "Catégorie";
-  fileUploadForm.appendChild(uploadCategoryLabel);
+async function handleFormSubmit(event) {
+  event.preventDefault();
 
-  //category select tag
+  const file = document.querySelector("#fileUpload")?.files[0];
+  const title = document.querySelector("#uploadTextTitle")?.value.trim();
+  const category = document.querySelector("#uploadCategory")?.value.trim();
 
-  const uploadCategorySelect = document.createElement("select");
-  uploadCategorySelect.id = "uploadCategory";
-  uploadCategorySelect.setAttribute("name", "categories");
-  uploadCategorySelect.classList.add("category-select");
-  fileUploadForm.appendChild(uploadCategorySelect);
-  fileCategoryOptions(categories);
-}
-
-//function for fetching the categories in the select form
-
-function fileCategoryOptions(categories) {
-  const uploadCategorySelect = document.querySelector(".category-select");
-  // Add an initial empty option
-  const emptyOption = document.createElement("option");
-  emptyOption.value = "";
-  emptyOption.innerText = ""; // or "Choisissez une catégorie"
-  uploadCategorySelect.appendChild(emptyOption);
-
-  // Add the real categories
-  categories.forEach((category) => {
-    const categoryOption = createOption(category);
-    uploadCategorySelect.appendChild(categoryOption);
-  });
-}
-
-function createOption(category) {
-  const selectCategoryOption = document.createElement("option");
-  selectCategoryOption.setAttribute("value", category.id);
-  selectCategoryOption.innerText = `${category.name}`;
-  return selectCategoryOption;
-}
-
-function hidingAddPhoto() {
-  const addPhotoBtn = document.querySelector(".add-photo");
-  if (addPhotoBtn) {
-    addPhotoBtn.style.display = "none";
+  if (!file || !title || !category) {
+    alert("Veuillez remplir tous les champs.");
+    return;
   }
-}
 
-function submitFormInput() {
-  const fileUploadForm = document.querySelector(".file-upload-form");
-  const validerFormInput = document.createElement("input");
-  validerFormInput.classList.add("submit-form-input");
-  validerFormInput.value = "Valider";
-  validerFormInput.type = "submit";
-  fileUploadForm.appendChild(validerFormInput);
+  const formData = new FormData();
+  formData.append("image", file);
+  formData.append("title", title);
+  formData.append("category", category);
+
+  try {
+    const response = await fetch("http://localhost:5678/api/works", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error("Échec de l'envoi.");
+
+    const result = await response.json();
+    console.log("Upload réussi :", result);
+
+    resetModalState();
+    // Optionally, refresh works list here
+  } catch (error) {
+    console.error("Erreur d'upload :", error);
+    alert("Erreur lors de l'envoi. Veuillez réessayer.");
+  }
 }

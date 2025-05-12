@@ -430,8 +430,8 @@ footer nav ul {
   margin: 40% auto; /* 40% from the top and centered */
   padding: 30px;
   border: 1px solid #888;
-  width: 40%; /* Could be more or less, depending on screen size */
-  height: 55%;
+  width: 35%; /* Could be more or less, depending on screen size */
+  min-height: 55%;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
