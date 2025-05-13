@@ -288,13 +288,51 @@ function displayWorksModal(worksToDisplay) {
 function createFigureModal(work) {
   const figure = document.createElement("figure");
   figure.classList.add("modal-figure");
+
   figure.innerHTML = `
     <img src="${work.imageUrl}" alt="${work.title}" />
-    <button class="trash-btn" data-id="${work.id}">
-      <i class="fa-solid fa-trash"></i>
-    </button>
   `;
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.classList.add("trash-btn");
+  deleteBtn.dataset.id = work.id;
+  deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i>`;
+
+  // Add event listener directly to this specific button
+  deleteBtn.addEventListener("click", handleDelete);
+
+  figure.appendChild(deleteBtn);
+
   return figure;
+}
+
+async function handleDelete(event) {
+  const button = event.currentTarget;
+  const workId = button.dataset.id;
+
+  if (!workId) return;
+
+  try {
+    const response = await fetch(`http://localhost:5678/api/works/${workId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`, // make sure token is defined
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete work");
+    }
+
+    console.log(`Work with ID ${workId} deleted successfully!`);
+
+    // Remove the DOM element containing this work
+    const figure = button.closest("figure");
+    if (figure) figure.remove();
+  } catch (error) {
+    console.error("Error deleting work:", error);
+    alert("Failed to delete the image. Please try again.");
+  }
 }
 
 function createAddPhotoButton() {
