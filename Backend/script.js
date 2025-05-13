@@ -4,16 +4,13 @@ let gallery = document.querySelector(".gallery");
 //selecting the DOM place for adding the filter buttons
 let sectionFiltres = document.querySelector(".section-filtres");
 
-// 1.declare WORKS as a global variable (replaced ulteriourly inside the FETCH function)
-let works = [];
-
 // 2. Fetching the WORKS from the API
 const fetchWorks = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/works");
-    works = await response.json(); //defining the values of the global WORKS variable
+    const works = await response.json(); //defining the values of the global WORKS variable
     displayWorks(works); //passing down the works array to the displayWorks function so it knows what to work with!
-    displayWorksModal(works); //dislaying works within the modal!
+    return works;
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
@@ -192,7 +189,10 @@ function showEditButton() {
   const btnModifier = document.querySelector(".btn-modifier");
   btnModifier.appendChild(editBtn);
 
-  editBtn.onclick = appearModal;
+  editBtn.addEventListener("click", async () => {
+    const works = await fetchWorks(); // gets them
+    appearModal(works);
+  });
 }
 
 function deleteFilterBtn() {
@@ -210,11 +210,11 @@ function showAdminBanner() {
 let modalStage = "gallery";
 let modalInitialized = false;
 
-function appearModal() {
+function appearModal(works) {
   const modal = document.getElementById("myModal");
   modal.style.display = "block";
   prepareModal();
-  buildModalContents();
+  buildModalContents(works);
 }
 
 function prepareModal() {
@@ -242,16 +242,19 @@ function resetModalState() {
   modalStage = "gallery";
 }
 
-function buildModalContents() {
-  modalStage = "gallery"; // ✅ Add this line
+async function buildModalContents() {
   if (!modalInitialized) {
     setModalTitle("Galerie Photo");
     modalInitialized = true;
   }
+
+  const works = await fetchWorks(); // <--- fetch them again here!
   displayWorksModal(works);
   createAddPhotoButton();
   removeOldUploadForm();
   clearElement(".back-btn-span");
+
+  modalStage = "gallery";
 }
 
 function setModalTitle(text) {
@@ -319,15 +322,17 @@ function clearElement(selector) {
   if (el) el.innerHTML = "";
 }
 
-function uploadFormView(categories) {
+async function uploadFormView() {
   addBackArrowBtn();
   removeGallery();
   setModalTitle("Ajout photo");
   renderUploadForm();
   addUploadTitleInput();
-  addUploadCategorySelect(categories);
-  addSubmitButton();
 
+  const categories = await fetchCategories(); // <--- fetch them again here!
+  addUploadCategorySelect(categories);
+
+  addSubmitButton();
   modalStage = "upload";
 }
 
