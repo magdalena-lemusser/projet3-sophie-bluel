@@ -7,6 +7,9 @@ let sectionFiltres = document.querySelector(".section-filtres");
 // 1.declare WORKS as a global variable (replaced ulteriourly inside the FETCH function)
 let works = [];
 
+//eviter les variables globales! en général - peut-etre garder maintenant
+let categories = [];
+
 // 2. Fetching the WORKS from the API
 const fetchWorks = async () => {
   try {
@@ -25,12 +28,11 @@ const fetchWorks = async () => {
 const fetchCategories = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/categories");
-    const categories = await response.json(); //this defines the values for the global CATEGORIES variable
+    categories = await response.json(); //this defines the values for the global CATEGORIES variable
     console.log(categories);
     const allCategory = { id: 0, name: "Tous" }; // Adds the "All" category manually first so it appears first!
     const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
-    appendButtons(allCategories);
-    return categories;
+    appendButtons(allCategories); //passing down the allCategories array to the appendButtons function so it knows what to work with!
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
@@ -192,7 +194,7 @@ function showEditButton() {
   const btnModifier = document.querySelector(".btn-modifier");
   btnModifier.appendChild(editBtn);
 
-  editBtn.onclick = appearModal;
+  editBtn.addEventListener("click", appearModal);
 }
 
 function deleteFilterBtn() {
@@ -304,10 +306,7 @@ function createAddPhotoButton() {
     const button = document.createElement("button");
     button.classList.add("add-photo-btn");
     button.innerText = "Ajouter une photo";
-    button.addEventListener("click", async () => {
-      const categories = await fetchCategories(); // 🟢 get categories here
-      uploadFormView(categories); // 🟢 pass them into the upload form
-    });
+    button.addEventListener("click", uploadFormView);
 
     addDiv.appendChild(button);
     document.querySelector(".modal-body").appendChild(addDiv);
@@ -319,13 +318,13 @@ function clearElement(selector) {
   if (el) el.innerHTML = "";
 }
 
-function uploadFormView(categories) {
+function uploadFormView() {
   addBackArrowBtn();
   removeGallery();
   setModalTitle("Ajout photo");
   renderUploadForm();
   addUploadTitleInput();
-  addUploadCategorySelect(categories);
+  addUploadCategorySelect();
   addSubmitButton();
 
   modalStage = "upload";
@@ -430,41 +429,24 @@ function addUploadTitleInput() {
   form.appendChild(input);
 }
 
-function addUploadCategorySelect(categories) {
+function addUploadCategorySelect() {
   const form = document.querySelector(".file-upload-form");
+
   const label = document.createElement("label");
-  label.setAttribute("for", "uploadCategory"); // same as select tag ID
+  label.setAttribute("for", "uploadCategory");
   label.innerText = "Catégorie";
   form.appendChild(label);
 
   const select = document.createElement("select");
-  select.id = "uploadCategory"; //same as LABEL FOR attribute
+  select.id = "uploadCategory";
   select.name = "category";
-  select.classList.add("category-select");
+  select.innerHTML = `
+    <option value=""></option>
+    <option value="1">Objets</option>
+    <option value="2">Appartements</option>
+    <option value="3">Hôtels & restaurants</option>
+  `;
   form.appendChild(select);
-
-  populateCategorySelect(categories);
-}
-
-function populateCategorySelect(categories) {
-  const uploadCategorySelect = document.querySelector(".category-select");
-
-  // Clear it in case it already had options
-  uploadCategorySelect.innerHTML = "";
-
-  // creating the empty option
-  const emptyOption = document.createElement("option");
-  emptyOption.value = "";
-  emptyOption.innerText = "";
-  uploadCategorySelect.appendChild(emptyOption);
-
-  //fetching the real options
-  categories.forEach((category) => {
-    const option = document.createElement("option");
-    option.value = category.id;
-    option.innerText = category.name;
-    uploadCategorySelect.appendChild(option);
-  });
 }
 
 function addSubmitButton() {
