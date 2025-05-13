@@ -245,14 +245,15 @@ function resetModalState() {
 }
 
 function buildModalContents() {
+  modalStage = "gallery"; // ✅ Add this line
   if (!modalInitialized) {
     setModalTitle("Galerie Photo");
     modalInitialized = true;
   }
-
   displayWorksModal(works);
   createAddPhotoButton();
   removeOldUploadForm();
+  clearElement(".back-btn-span");
 }
 
 function setModalTitle(text) {
@@ -296,18 +297,20 @@ function createFigureModal(work) {
 }
 
 function createAddPhotoButton() {
-  clearElement(".add-photo");
+  let button = document.querySelector(".add-photo-btn");
 
-  const addDiv = document.createElement("div");
-  addDiv.classList.add("add-photo");
+  if (!button) {
+    const addDiv = document.createElement("div");
+    addDiv.classList.add("add-photo");
 
-  const button = document.createElement("button");
-  button.classList.add("add-photo-btn");
-  button.innerText = "Ajouter une photo";
-  button.addEventListener("click", uploadFormView);
+    const button = document.createElement("button");
+    button.classList.add("add-photo-btn");
+    button.innerText = "Ajouter une photo";
+    button.addEventListener("click", uploadFormView);
 
-  addDiv.appendChild(button);
-  document.querySelector(".modal-body").appendChild(addDiv);
+    addDiv.appendChild(button);
+    document.querySelector(".modal-body").appendChild(addDiv);
+  }
 }
 
 function clearElement(selector) {
@@ -316,6 +319,7 @@ function clearElement(selector) {
 }
 
 function uploadFormView() {
+  addBackArrowBtn();
   removeGallery();
   setModalTitle("Ajout photo");
   renderUploadForm();
@@ -324,6 +328,13 @@ function uploadFormView() {
   addSubmitButton();
 
   modalStage = "upload";
+}
+
+//BACK ARROW FUNCTION
+function addBackArrowBtn() {
+  const backArrowSpan = document.querySelector(".back-btn-span");
+  backArrowSpan.innerHTML = `<i class="fa-solid fa-arrow-left"></i>`;
+  backArrowSpan.onclick = previousModalStage;
 }
 
 function removeGallery() {
@@ -484,5 +495,15 @@ async function handleFormSubmit(event) {
   } catch (error) {
     console.error("Erreur d'upload :", error);
     alert("Erreur lors de l'envoi. Veuillez réessayer.");
+  }
+}
+
+function previousModalStage() {
+  if (modalStage === "preview") {
+    //go back to upload stage
+    uploadFormView();
+  } else if (modalStage === "upload") {
+    //go back to gallery stage
+    buildModalContents();
   }
 }
