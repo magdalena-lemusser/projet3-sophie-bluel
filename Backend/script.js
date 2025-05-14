@@ -1,15 +1,37 @@
-// selecting the DOM place for adding the WORKS
-let gallery = document.querySelector(".gallery");
+function init() {
+  const loginForm = document.querySelector("#login-form");
+  const isHomepage = document.querySelector(".gallery");
 
-//selecting the DOM place for adding the filter buttons
-let sectionFiltres = document.querySelector(".section-filtres");
+  if (loginForm) {
+    initLogin();
+    return;
+  }
+
+  if (isHomepage) {
+    initHomepage();
+  }
+}
+
+async function initHomepage() {
+  const token = JSON.parse(localStorage.getItem("token"));
+  if (token) {
+    activateEditorMode();
+  }
+
+  const works = await fetchWorks();
+  const categories = await fetchCategories();
+  const allCategory = { id: 0, name: "Tous" }; // Adds the "All" category manually first so it appears first!
+  const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
+
+  displayWorks(works);
+  appendButtons(allCategories);
+}
 
 // 2. Fetching the WORKS from the API
 const fetchWorks = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/works");
     const works = await response.json(); //defining the values of the global WORKS variable
-    displayWorks(works); //passing down the works array to the displayWorks function so it knows what to work with!
     return works;
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
@@ -24,9 +46,6 @@ const fetchCategories = async () => {
     const response = await fetch("http://localhost:5678/api/categories");
     const categories = await response.json(); //this defines the values for the global CATEGORIES variable
     console.log(categories);
-    const allCategory = { id: 0, name: "Tous" }; // Adds the "All" category manually first so it appears first!
-    const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
-    appendButtons(allCategories);
     return categories;
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
@@ -48,6 +67,7 @@ function createFigure({ imageUrl, title }) {
 // 4. Fonction DISPLAY - adds the figures to the DOM
 
 function displayWorks(worksToDisplay) {
+  const gallery = document.querySelector(".gallery");
   gallery.innerHTML = ""; // clear previous items
   worksToDisplay.forEach((work) => {
     const figure = createFigure(work);
@@ -63,7 +83,8 @@ function createButtons(btn) {
   button.id = `category-${btn.id}`;
 
   // Add the event listener dynamically:
-  button.addEventListener("click", () => {
+  button.addEventListener("click", async () => {
+    const works = await fetchWorks();
     if (btn.id === 0) {
       // If it's the "All" button (id 0), display everything
       displayWorks(works);
@@ -81,6 +102,7 @@ function createButtons(btn) {
 
 function appendButtons(dynamicButtons) {
   //dynamicButtons is just a label here for the categories from the API
+  const sectionFiltres = document.querySelector(".section-filtres");
   sectionFiltres.innerHTML = ""; // clear previous buttons
   dynamicButtons.forEach((btn) => {
     const button = createButtons(btn);
@@ -88,67 +110,57 @@ function appendButtons(dynamicButtons) {
   });
 }
 
-fetchCategories();
-
-fetchWorks();
-
-//SETTING THE LOGIN PAGE
-const loginForm = document.querySelector("#login-form");
-if (loginForm) {
-  //THIS CODE ONLY RUNS IF THERE IS AN ELEMENT WITH ID LOGIN FORM
-  document
-    .getElementById("login-form")
-    .addEventListener("submit", async (event) => {
-      event.preventDefault(); // Stop form from reloading the page
-
-      const email = document.getElementById("email").value.trim(); //makes sure the user sends a CLEAN STRING
-      const password = document.getElementById("password").value.trim();
-      const errorElement = document.getElementById("error-message");
-      errorElement.textContent = ""; //deletes the previous error message
-
-      if (!email || !password) {
-        //if the email or password are EMPTY
-        errorElement.textContent =
-          "Veuillez saisir votre e-mail et mot de passe"; // show this error message
-        return; // and stop the code here. Don't run fetch() below
-      }
-
-      //sending the POST request
-
-      try {
-        const response = await fetch("http://localhost:5678/api/users/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }), //This works only if the key names and variable names are the same.
-        });
-
-        const data = await response.json(); //turns raw JSON into a JS object (data).
-
-        //login failure
-        if (!response.ok) {
-          //(login failed according to server)
-          errorElement.textContent =
-            data.message || "Erreur d'authentification."; //show an error
-          return; //stop here
-        }
-
-        //login success
-        localStorage.setItem("token", JSON.stringify(data.token)); // Saves ONLY the token data as a string in the browser storage under the name USER
-        window.location.href = "../FrontEnd/index.html"; // 🎉 redirect
-      } catch (err) {
-        console.error("Erreur d'authentification:", err);
-        errorElement.textContent =
-          "Erreur d'authentification. Veuillez reessayer.";
-      }
-    });
+function initLogin() {
+  const loginForm = document.querySelector("#login-form");
+  if (loginForm) {
+    setUpLoginForm(loginForm);
+  }
 }
 
-const token = JSON.parse(localStorage.getItem("token")); //turns the string I got with .setItem into an object
+function setUpLoginForm(form) {
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault(); // Stop form from reloading the page
 
-if (token) {
-  activateEditorMode();
+    const email = document.getElementById("email").value.trim(); //makes sure the user sends a CLEAN STRING
+    const password = document.getElementById("password").value.trim();
+    const errorElement = document.getElementById("error-message");
+    errorElement.textContent = ""; //deletes the previous error message
+
+    if (!email || !password) {
+      //if the email or password are EMPTY
+      errorElement.textContent = "Veuillez saisir votre e-mail et mot de passe"; // show this error message
+      return; // and stop the code here. Don't run fetch() below
+    }
+
+    //sending the POST request
+
+    try {
+      const response = await fetch("http://localhost:5678/api/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }), //This works only if the key names and variable names are the same.
+      });
+
+      const data = await response.json(); //turns raw JSON into a JS object (data).
+
+      //login failure
+      if (!response.ok) {
+        //(login failed according to server)
+        errorElement.textContent = data.message || "Erreur d'authentification."; //show an error
+        return; //stop here
+      }
+
+      //login success
+      localStorage.setItem("token", JSON.stringify(data.token)); // Saves ONLY the token data as a string in the browser storage under the name USER
+      window.location.href = "../FrontEnd/index.html"; // 🎉 redirect
+    } catch (err) {
+      console.error("Erreur d'authentification:", err);
+      errorElement.textContent =
+        "Erreur d'authentification. Veuillez reessayer.";
+    }
+  });
 }
 
 function activateEditorMode() {
@@ -196,6 +208,8 @@ function showEditButton() {
 }
 
 function deleteFilterBtn() {
+  const gallery = document.querySelector(".gallery");
+  const sectionFiltres = document.querySelector(".section-filtres");
   sectionFiltres.classList.add("hidden");
   gallery.classList.add("edit-page-margins");
 }
@@ -295,7 +309,7 @@ function createFigureModal(work) {
 
   const deleteBtn = document.createElement("button");
   deleteBtn.classList.add("trash-btn");
-  deleteBtn.dataset.id = work.id;
+  deleteBtn.dataset.id = work.id; //i don't need the ${} here somehow?
   deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i>`;
 
   // Add event listener directly to this specific button
@@ -316,7 +330,7 @@ async function handleDelete(event) {
     const response = await fetch(`http://localhost:5678/api/works/${workId}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${token}`, // make sure token is defined
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -346,7 +360,7 @@ function createAddPhotoButton() {
     button.classList.add("add-photo-btn");
     button.innerText = "Ajouter une photo";
     button.addEventListener("click", async () => {
-      const categories = await fetchCategories(); // 🟢 get categories here
+      const categories = await fetchCategories(); // call the fetch function again here,
       uploadFormView(categories); // 🟢 pass them into the upload form
     });
 
@@ -568,3 +582,5 @@ function previousModalStage() {
     buildModalContents();
   }
 }
+
+init();
