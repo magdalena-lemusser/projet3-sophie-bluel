@@ -323,6 +323,7 @@ function createFigureModal(work) {
 async function handleDelete(event) {
   const button = event.currentTarget;
   const workId = button.dataset.id;
+  const token = JSON.parse(localStorage.getItem("token"));
 
   if (!workId) return;
 
@@ -417,11 +418,12 @@ function renderUploadForm() {
   form.setAttribute("method", "POST");
 
   form.innerHTML = `
-    <div class="image-upload-div">
-      <div class="upload-input-icon"></div>
-      <div class="upload-input-btn"></div>
-      <div class="upload-input-text"></div>
-    </div>
+      <div class="image-upload-div">
+       <div class="image-preview-div"></div>
+        <div class="upload-input-icon"></div>
+       <div class="upload-input-btn"></div>
+        <div class="upload-input-text"></div>
+      </div>
   `;
 
   form.addEventListener("submit", handleFormSubmit);
@@ -459,14 +461,16 @@ function createFileInputElements() {
 function handleImagePreview(event) {
   modalStage = "preview";
   const file = event.target.files[0];
-  const previewContainer = document.querySelector(".upload-input-icon");
+  const previewContainer = document.querySelector(".image-preview-div");
 
   if (!file || !file.type.startsWith("image/")) return;
 
   const reader = new FileReader();
   reader.onload = (e) => {
     previewContainer.innerHTML = `<img src="${e.target.result}" alt="Image preview" class="image-preview" />`;
-    document.querySelector(".cute-upload-btn").style.display = "none";
+    document.querySelector(".upload-input-icon").style.display = "none";
+    document.querySelector(".upload-input-btn").style.display = "none";
+    document.querySelector(".upload-input-text").style.display = "none";
   };
   reader.readAsDataURL(file);
 }
@@ -476,7 +480,7 @@ function addUploadTitleInput() {
 
   const label = document.createElement("label");
   label.setAttribute("for", "uploadTextTitle");
-  label.innerText = "Title";
+  label.innerText = "Titre";
   form.appendChild(label);
 
   const input = document.createElement("input");
@@ -527,16 +531,19 @@ function populateCategorySelect(categories) {
 function addSubmitButton() {
   const form = document.querySelector(".file-upload-form");
 
+  const buttonDiv = document.createElement("div");
+  buttonDiv.classList.add("submit-btn-div");
   const button = document.createElement("button");
   button.type = "submit";
   button.classList.add("submit-btn");
   button.innerText = "Valider";
-  form.appendChild(button);
+  buttonDiv.appendChild(button);
+  form.appendChild(buttonDiv);
 }
 
 async function handleFormSubmit(event) {
   event.preventDefault();
-
+  const token = JSON.parse(localStorage.getItem("token"));
   const file = document.querySelector("#fileUpload")?.files[0];
   const title = document.querySelector("#uploadTextTitle")?.value.trim();
   const category = document.querySelector("#uploadCategory")?.value.trim();
@@ -568,6 +575,7 @@ async function handleFormSubmit(event) {
     resetModalState();
     // Optionally, refresh works list here
   } catch (error) {
+    console.log("Form data:", file, title, category);
     console.error("Erreur d'upload :", error);
     alert("Erreur lors de l'envoi. Veuillez réessayer.");
   }

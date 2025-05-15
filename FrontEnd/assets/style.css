@@ -444,18 +444,18 @@ footer nav ul {
 .modal-content {
   background-color: #fefefe;
   margin: 40% auto; /* 40% from the top and centered */
-  padding: 30px;
+  padding: 20px;
   border: 1px solid #888;
   width: 35%; /* Could be more or less, depending on screen size */
   min-height: 55%;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
+  justify-content: center;
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 10px;
 }
 /* The Close Button */
 .close-btn {
@@ -533,10 +533,6 @@ footer nav ul {
   margin: auto;
 }
 
-.cute-upload-btn:hover {
-  background-color: #45a049;
-}
-
 .back-btn-span button {
   color: #aaa;
   float: left;
@@ -555,14 +551,15 @@ footer nav ul {
 
 .file-upload-div {
   margin-top: 20px;
-  width: 90%;
+  width: 80%;
   margin-left: auto;
   margin-right: auto;
 }
 .file-upload-div form {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 10px;
   min-height: 400px;
 }
 
@@ -574,9 +571,10 @@ footer nav ul {
   justify-content: center;
   gap: 10px;
   align-items: center;
-  height: 169px;
+  height: 150px;
   width: 100%;
   background-color: #e8f1f6;
+  overflow: hidden; /* optional: clips anything that goes outside */
 }
 
 .upload-input-icon {
@@ -584,9 +582,13 @@ footer nav ul {
   color: #cbd6dc;
 }
 
-.upload-input-icon img {
+.image-preview-div {
+  width: 30%;
+  max-height: 150px;
+}
+.image-preview-div img {
+  object-fit: contain; /* Make it scale nicely */
   width: 100%;
-  max-height: 20%;
 }
 
 .upload-input-btn {
@@ -615,4 +617,39 @@ footer nav ul {
 .upload-input-text {
   color: #306685;
   font-size: small;
+}
+
+.file-upload-form input,
+select {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  border: 0px solid transparent;
+  box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.09);
+}
+
+.file-upload-form label {
+  font-size: 14px;
+}
+
+.submit-btn-div {
+  padding: 20px;
+  border-top: 1px solid #a7a7a7;
+  margin-top: 30px;
+}
+.file-upload-form button {
+  background-color: #a7a7a7;
+  border: 2px solid #a7a7a7;
+  color: white;
+  padding: 10px;
+  font-family: "Syne";
+  border-radius: 20px;
+  min-width: 200px;
+  display: block;
+  margin: auto;
+}
+
+.file-upload-form button:hover {
+  background-color: #1d6154;
+  border: 2px solid #1d6154;
 }
