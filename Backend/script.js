@@ -12,45 +12,48 @@ function init() {
   }
 }
 
+// 1. Create the factory
+const createDataFetcher = () => {
+  let worksCache = null;
+  let categoriesCache = null;
+
+  return {
+    async getWorks() {
+      if (!worksCache) {
+        const response = await fetch("http://localhost:5678/api/works");
+        worksCache = await response.json();
+      }
+      return worksCache;
+    },
+    async getCategories() {
+      if (!categoriesCache) {
+        const response = await fetch("http://localhost:5678/api/categories");
+        categoriesCache = await response.json();
+      }
+      return categoriesCache;
+    },
+    clearWorksCache() {
+      worksCache = null;
+    },
+  };
+};
+
+const dataFetcher = createDataFetcher();
+
 async function initHomepage() {
   const token = JSON.parse(localStorage.getItem("token"));
   if (token) {
     activateEditorMode();
   }
 
-  const works = await fetchWorks();
-  const categories = await fetchCategories();
+  const works = await dataFetcher.getWorks();
+  const categories = await dataFetcher.getCategories();
   const allCategory = { id: 0, name: "Tous" }; // Adds the "All" category manually first so it appears first!
   const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
 
   displayWorks(works);
   appendButtons(allCategories);
 }
-
-// 2. Fetching the WORKS from the API
-const fetchWorks = async () => {
-  try {
-    const response = await fetch("http://localhost:5678/api/works");
-    const works = await response.json(); //defining the values of the global WORKS variable
-    return works;
-  } catch (error) {
-    console.error("Erreur lors de la récupération des travaux :", error);
-  }
-};
-
-//change: methode init dès le debut pour faire une fonction globale!
-
-// 2. Fetching the CATEGORIES from the API + adding an "all" category
-const fetchCategories = async () => {
-  try {
-    const response = await fetch("http://localhost:5678/api/categories");
-    const categories = await response.json(); //this defines the values for the global CATEGORIES variable
-    console.log(categories);
-    return categories;
-  } catch (error) {
-    console.error("Erreur lors de la récupération des travaux :", error);
-  }
-};
 
 // 3. Fonction CREATEFIGURE - handles the HTML for each figure
 
@@ -81,10 +84,25 @@ function createButtons(btn) {
   const button = document.createElement("button");
   button.innerText = btn.name;
   button.id = `category-${btn.id}`;
+  button.classList.add("filter-btn");
+
+  // If it's the "All" button, set it active by default
+  if (btn.id === 0) {
+    button.classList.add("active");
+  }
 
   // Add the event listener dynamically:
   button.addEventListener("click", async () => {
-    const works = await fetchWorks();
+    const works = await dataFetcher.getWorks();
+
+    // Remove active class from all buttons
+    document.querySelectorAll("button.filter-btn").forEach((btn) => {
+      btn.classList.remove("active");
+    });
+
+    // Add active class to clicked button
+    button.classList.add("active");
+
     if (btn.id === 0) {
       // If it's the "All" button (id 0), display everything
       displayWorks(works);
@@ -202,7 +220,7 @@ function showEditButton() {
   btnModifier.appendChild(editBtn);
 
   editBtn.addEventListener("click", async () => {
-    const works = await fetchWorks(); // gets them
+    const works = await dataFetcher.getWorks();
     appearModal(works);
   });
 }
@@ -262,7 +280,7 @@ async function buildModalContents() {
     modalInitialized = true;
   }
 
-  const works = await fetchWorks(); // <--- fetch them again here!
+  const works = await dataFetcher.getWorks();
   displayWorksModal(works);
   createAddPhotoButton();
   removeOldUploadForm();
@@ -341,9 +359,11 @@ async function handleDelete(event) {
 
     console.log(`Work with ID ${workId} deleted successfully!`);
 
-    // Remove the DOM element containing this work
-    const figure = button.closest("figure");
-    if (figure) figure.remove();
+    //refreshing the works cache
+
+    dataFetcher.clearWorksCache(); //
+    const updatedWorks = await dataFetcher.getWorks(); //
+    displayWorks(updatedWorks); //
   } catch (error) {
     console.error("Error deleting work:", error);
     alert("Failed to delete the image. Please try again.");
@@ -361,7 +381,7 @@ function createAddPhotoButton() {
     button.classList.add("add-photo-btn");
     button.innerText = "Ajouter une photo";
     button.addEventListener("click", async () => {
-      const categories = await fetchCategories(); // call the fetch function again here,
+      const categories = await dataFetcher.getCategories();
       uploadFormView(categories); // 🟢 pass them into the upload form
     });
 
@@ -382,7 +402,7 @@ async function uploadFormView() {
   renderUploadForm();
   addUploadTitleInput();
 
-  const categories = await fetchCategories(); // <--- fetch them again here!
+  const categories = await dataFetcher.getCategories(); // <--- fetch them again here!
   addUploadCategorySelect(categories);
 
   addSubmitButton();
@@ -572,8 +592,12 @@ async function handleFormSubmit(event) {
     const result = await response.json();
     console.log("Upload réussi :", result);
 
+    // refresh works list cause there has been a change
+    dataFetcher.clearWorksCache();
+    const updatedWorks = await dataFetcher.getWorks();
+    displayWorks(updatedWorks);
+
     resetModalState();
-    // Optionally, refresh works list here
   } catch (error) {
     console.log("Form data:", file, title, category);
     console.error("Erreur d'upload :", error);

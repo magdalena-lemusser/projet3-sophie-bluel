@@ -1,22 +1,38 @@
-// selecting the DOM place for adding the WORKS
-let gallery = document.querySelector(".gallery");
+function init() {
+  const loginForm = document.querySelector("#login-form");
+  const isHomepage = document.querySelector(".gallery");
 
-//selecting the DOM place for adding the filter buttons
-let sectionFiltres = document.querySelector(".section-filtres");
+  if (loginForm) {
+    initLogin();
+    return;
+  }
 
-// 1.declare WORKS as a global variable (replaced ulteriourly inside the FETCH function)
-let works = [];
+  if (isHomepage) {
+    initHomepage();
+  }
+}
 
-//eviter les variables globales! en général - peut-etre garder maintenant
-let categories = [];
+async function initHomepage() {
+  const token = JSON.parse(localStorage.getItem("token"));
+  if (token) {
+    activateEditorMode();
+  }
+
+  const works = await fetchWorks();
+  const categories = await fetchCategories();
+  const allCategory = { id: 0, name: "Tous" }; // Adds the "All" category manually first so it appears first!
+  const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
+
+  displayWorks(works);
+  appendButtons(allCategories);
+}
 
 // 2. Fetching the WORKS from the API
 const fetchWorks = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/works");
-    works = await response.json(); //defining the values of the global WORKS variable
-    displayWorks(works); //passing down the works array to the displayWorks function so it knows what to work with!
-    displayWorksModal(works); //dislaying works within the modal!
+    const works = await response.json(); //defining the values of the global WORKS variable
+    return works;
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
@@ -28,11 +44,9 @@ const fetchWorks = async () => {
 const fetchCategories = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/categories");
-    categories = await response.json(); //this defines the values for the global CATEGORIES variable
+    const categories = await response.json(); //this defines the values for the global CATEGORIES variable
     console.log(categories);
-    const allCategory = { id: 0, name: "Tous" }; // Adds the "All" category manually first so it appears first!
-    const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
-    appendButtons(allCategories); //passing down the allCategories array to the appendButtons function so it knows what to work with!
+    return categories;
   } catch (error) {
     console.error("Erreur lors de la récupération des travaux :", error);
   }
@@ -53,6 +67,7 @@ function createFigure({ imageUrl, title }) {
 // 4. Fonction DISPLAY - adds the figures to the DOM
 
 function displayWorks(worksToDisplay) {
+  const gallery = document.querySelector(".gallery");
   gallery.innerHTML = ""; // clear previous items
   worksToDisplay.forEach((work) => {
     const figure = createFigure(work);
@@ -68,7 +83,8 @@ function createButtons(btn) {
   button.id = `category-${btn.id}`;
 
   // Add the event listener dynamically:
-  button.addEventListener("click", () => {
+  button.addEventListener("click", async () => {
+    const works = await fetchWorks();
     if (btn.id === 0) {
       // If it's the "All" button (id 0), display everything
       displayWorks(works);
@@ -86,6 +102,7 @@ function createButtons(btn) {
 
 function appendButtons(dynamicButtons) {
   //dynamicButtons is just a label here for the categories from the API
+  const sectionFiltres = document.querySelector(".section-filtres");
   sectionFiltres.innerHTML = ""; // clear previous buttons
   dynamicButtons.forEach((btn) => {
     const button = createButtons(btn);
@@ -93,67 +110,57 @@ function appendButtons(dynamicButtons) {
   });
 }
 
-fetchCategories();
-
-fetchWorks();
-
-//SETTING THE LOGIN PAGE
-const loginForm = document.querySelector("#login-form");
-if (loginForm) {
-  //THIS CODE ONLY RUNS IF THERE IS AN ELEMENT WITH ID LOGIN FORM
-  document
-    .getElementById("login-form")
-    .addEventListener("submit", async (event) => {
-      event.preventDefault(); // Stop form from reloading the page
-
-      const email = document.getElementById("email").value.trim(); //makes sure the user sends a CLEAN STRING
-      const password = document.getElementById("password").value.trim();
-      const errorElement = document.getElementById("error-message");
-      errorElement.textContent = ""; //deletes the previous error message
-
-      if (!email || !password) {
-        //if the email or password are EMPTY
-        errorElement.textContent =
-          "Veuillez saisir votre e-mail et mot de passe"; // show this error message
-        return; // and stop the code here. Don't run fetch() below
-      }
-
-      //sending the POST request
-
-      try {
-        const response = await fetch("http://localhost:5678/api/users/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }), //This works only if the key names and variable names are the same.
-        });
-
-        const data = await response.json(); //turns raw JSON into a JS object (data).
-
-        //login failure
-        if (!response.ok) {
-          //(login failed according to server)
-          errorElement.textContent =
-            data.message || "Erreur d'authentification."; //show an error
-          return; //stop here
-        }
-
-        //login success
-        localStorage.setItem("token", JSON.stringify(data.token)); // Saves ONLY the token data as a string in the browser storage under the name USER
-        window.location.href = "../FrontEnd/index.html"; // 🎉 redirect
-      } catch (err) {
-        console.error("Erreur d'authentification:", err);
-        errorElement.textContent =
-          "Erreur d'authentification. Veuillez reessayer.";
-      }
-    });
+function initLogin() {
+  const loginForm = document.querySelector("#login-form");
+  if (loginForm) {
+    setUpLoginForm(loginForm);
+  }
 }
 
-const token = JSON.parse(localStorage.getItem("token")); //turns the string I got with .setItem into an object
+function setUpLoginForm(form) {
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault(); // Stop form from reloading the page
 
-if (token) {
-  activateEditorMode();
+    const email = document.getElementById("email").value.trim(); //makes sure the user sends a CLEAN STRING
+    const password = document.getElementById("password").value.trim();
+    const errorElement = document.getElementById("error-message");
+    errorElement.textContent = ""; //deletes the previous error message
+
+    if (!email || !password) {
+      //if the email or password are EMPTY
+      errorElement.textContent = "Veuillez saisir votre e-mail et mot de passe"; // show this error message
+      return; // and stop the code here. Don't run fetch() below
+    }
+
+    //sending the POST request
+
+    try {
+      const response = await fetch("http://localhost:5678/api/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }), //This works only if the key names and variable names are the same.
+      });
+
+      const data = await response.json(); //turns raw JSON into a JS object (data).
+
+      //login failure
+      if (!response.ok) {
+        //(login failed according to server)
+        errorElement.textContent = data.message || "Erreur d'authentification."; //show an error
+        return; //stop here
+      }
+
+      //login success
+      localStorage.setItem("token", JSON.stringify(data.token)); // Saves ONLY the token data as a string in the browser storage under the name USER
+      window.location.href = "../FrontEnd/index.html"; // 🎉 redirect
+    } catch (err) {
+      console.error("Erreur d'authentification:", err);
+      errorElement.textContent =
+        "Erreur d'authentification. Veuillez reessayer.";
+    }
+  });
 }
 
 function activateEditorMode() {
@@ -194,10 +201,15 @@ function showEditButton() {
   const btnModifier = document.querySelector(".btn-modifier");
   btnModifier.appendChild(editBtn);
 
-  editBtn.addEventListener("click", appearModal);
+  editBtn.addEventListener("click", async () => {
+    const works = await fetchWorks(); // gets them
+    appearModal(works);
+  });
 }
 
 function deleteFilterBtn() {
+  const gallery = document.querySelector(".gallery");
+  const sectionFiltres = document.querySelector(".section-filtres");
   sectionFiltres.classList.add("hidden");
   gallery.classList.add("edit-page-margins");
 }
@@ -212,11 +224,11 @@ function showAdminBanner() {
 let modalStage = "gallery";
 let modalInitialized = false;
 
-function appearModal() {
+function appearModal(works) {
   const modal = document.getElementById("myModal");
   modal.style.display = "block";
   prepareModal();
-  buildModalContents();
+  buildModalContents(works);
 }
 
 function prepareModal() {
@@ -244,16 +256,19 @@ function resetModalState() {
   modalStage = "gallery";
 }
 
-function buildModalContents() {
-  modalStage = "gallery"; // ✅ Add this line
+async function buildModalContents() {
   if (!modalInitialized) {
     setModalTitle("Galerie Photo");
     modalInitialized = true;
   }
+
+  const works = await fetchWorks(); // <--- fetch them again here!
   displayWorksModal(works);
   createAddPhotoButton();
   removeOldUploadForm();
   clearElement(".back-btn-span");
+
+  modalStage = "gallery";
 }
 
 function setModalTitle(text) {
@@ -287,13 +302,52 @@ function displayWorksModal(worksToDisplay) {
 function createFigureModal(work) {
   const figure = document.createElement("figure");
   figure.classList.add("modal-figure");
+
   figure.innerHTML = `
     <img src="${work.imageUrl}" alt="${work.title}" />
-    <button class="trash-btn" data-id="${work.id}">
-      <i class="fa-solid fa-trash"></i>
-    </button>
   `;
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.classList.add("trash-btn");
+  deleteBtn.dataset.id = work.id; //i don't need the ${} here somehow?
+  deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i>`;
+
+  // Add event listener directly to this specific button
+  deleteBtn.addEventListener("click", handleDelete);
+
+  figure.appendChild(deleteBtn);
+
   return figure;
+}
+
+async function handleDelete(event) {
+  const button = event.currentTarget;
+  const workId = button.dataset.id;
+  const token = JSON.parse(localStorage.getItem("token"));
+
+  if (!workId) return;
+
+  try {
+    const response = await fetch(`http://localhost:5678/api/works/${workId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete work");
+    }
+
+    console.log(`Work with ID ${workId} deleted successfully!`);
+
+    // Remove the DOM element containing this work
+    const figure = button.closest("figure");
+    if (figure) figure.remove();
+  } catch (error) {
+    console.error("Error deleting work:", error);
+    alert("Failed to delete the image. Please try again.");
+  }
 }
 
 function createAddPhotoButton() {
@@ -306,7 +360,10 @@ function createAddPhotoButton() {
     const button = document.createElement("button");
     button.classList.add("add-photo-btn");
     button.innerText = "Ajouter une photo";
-    button.addEventListener("click", uploadFormView);
+    button.addEventListener("click", async () => {
+      const categories = await fetchCategories(); // call the fetch function again here,
+      uploadFormView(categories); // 🟢 pass them into the upload form
+    });
 
     addDiv.appendChild(button);
     document.querySelector(".modal-body").appendChild(addDiv);
@@ -318,15 +375,17 @@ function clearElement(selector) {
   if (el) el.innerHTML = "";
 }
 
-function uploadFormView() {
+async function uploadFormView() {
   addBackArrowBtn();
   removeGallery();
   setModalTitle("Ajout photo");
   renderUploadForm();
   addUploadTitleInput();
-  addUploadCategorySelect();
-  addSubmitButton();
 
+  const categories = await fetchCategories(); // <--- fetch them again here!
+  addUploadCategorySelect(categories);
+
+  addSubmitButton();
   modalStage = "upload";
 }
 
@@ -359,11 +418,12 @@ function renderUploadForm() {
   form.setAttribute("method", "POST");
 
   form.innerHTML = `
-    <div class="image-upload-div">
-      <div class="upload-input-icon"></div>
-      <div class="upload-input-btn"></div>
-      <div class="upload-input-text"></div>
-    </div>
+      <div class="image-upload-div">
+       <div class="image-preview-div"></div>
+        <div class="upload-input-icon"></div>
+       <div class="upload-input-btn"></div>
+        <div class="upload-input-text"></div>
+      </div>
   `;
 
   form.addEventListener("submit", handleFormSubmit);
@@ -401,14 +461,16 @@ function createFileInputElements() {
 function handleImagePreview(event) {
   modalStage = "preview";
   const file = event.target.files[0];
-  const previewContainer = document.querySelector(".upload-input-icon");
+  const previewContainer = document.querySelector(".image-preview-div");
 
   if (!file || !file.type.startsWith("image/")) return;
 
   const reader = new FileReader();
   reader.onload = (e) => {
     previewContainer.innerHTML = `<img src="${e.target.result}" alt="Image preview" class="image-preview" />`;
-    document.querySelector(".cute-upload-btn").style.display = "none";
+    document.querySelector(".upload-input-icon").style.display = "none";
+    document.querySelector(".upload-input-btn").style.display = "none";
+    document.querySelector(".upload-input-text").style.display = "none";
   };
   reader.readAsDataURL(file);
 }
@@ -418,7 +480,7 @@ function addUploadTitleInput() {
 
   const label = document.createElement("label");
   label.setAttribute("for", "uploadTextTitle");
-  label.innerText = "Title";
+  label.innerText = "Titre";
   form.appendChild(label);
 
   const input = document.createElement("input");
@@ -429,39 +491,59 @@ function addUploadTitleInput() {
   form.appendChild(input);
 }
 
-function addUploadCategorySelect() {
+function addUploadCategorySelect(categories) {
   const form = document.querySelector(".file-upload-form");
-
   const label = document.createElement("label");
-  label.setAttribute("for", "uploadCategory");
+  label.setAttribute("for", "uploadCategory"); // same as select tag ID
   label.innerText = "Catégorie";
   form.appendChild(label);
 
   const select = document.createElement("select");
-  select.id = "uploadCategory";
+  select.id = "uploadCategory"; //same as LABEL FOR attribute
   select.name = "category";
-  select.innerHTML = `
-    <option value=""></option>
-    <option value="1">Objets</option>
-    <option value="2">Appartements</option>
-    <option value="3">Hôtels & restaurants</option>
-  `;
+  select.classList.add("category-select");
   form.appendChild(select);
+
+  populateCategorySelect(categories);
+}
+
+function populateCategorySelect(categories) {
+  const uploadCategorySelect = document.querySelector(".category-select");
+
+  // Clear it in case it already had options
+  uploadCategorySelect.innerHTML = "";
+
+  // creating the empty option
+  const emptyOption = document.createElement("option");
+  emptyOption.value = "";
+  emptyOption.innerText = "";
+  uploadCategorySelect.appendChild(emptyOption);
+
+  //fetching the real options
+  categories.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category.id;
+    option.innerText = category.name;
+    uploadCategorySelect.appendChild(option);
+  });
 }
 
 function addSubmitButton() {
   const form = document.querySelector(".file-upload-form");
 
+  const buttonDiv = document.createElement("div");
+  buttonDiv.classList.add("submit-btn-div");
   const button = document.createElement("button");
   button.type = "submit";
   button.classList.add("submit-btn");
   button.innerText = "Valider";
-  form.appendChild(button);
+  buttonDiv.appendChild(button);
+  form.appendChild(buttonDiv);
 }
 
 async function handleFormSubmit(event) {
   event.preventDefault();
-
+  const token = JSON.parse(localStorage.getItem("token"));
   const file = document.querySelector("#fileUpload")?.files[0];
   const title = document.querySelector("#uploadTextTitle")?.value.trim();
   const category = document.querySelector("#uploadCategory")?.value.trim();
@@ -493,6 +575,7 @@ async function handleFormSubmit(event) {
     resetModalState();
     // Optionally, refresh works list here
   } catch (error) {
+    console.log("Form data:", file, title, category);
     console.error("Erreur d'upload :", error);
     alert("Erreur lors de l'envoi. Veuillez réessayer.");
   }
@@ -507,3 +590,5 @@ function previousModalStage() {
     buildModalContents();
   }
 }
+
+init();
