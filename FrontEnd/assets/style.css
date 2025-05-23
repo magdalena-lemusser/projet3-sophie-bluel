@@ -656,7 +656,7 @@ select {
   margin: auto;
 }
 
-.file-upload-form button:hover {
+.file-upload-form .formvalide {
   background-color: #1d6154;
   border: 2px solid #1d6154;
 }

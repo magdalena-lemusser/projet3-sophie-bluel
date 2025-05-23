@@ -252,12 +252,17 @@ function appearModal(works) {
 function prepareModal() {
   const modal = document.getElementById("myModal");
   const closeBtn = document.getElementById("closeModalBtn");
+  const modalContent = modal.querySelector(".modal-content");
 
   closeBtn.onclick = closeModal;
 
-  window.onclick = (event) => {
-    if (event.target === modal) closeModal();
-  };
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+  modalContent.addEventListener("click", (e) => e.stopPropagation());
 }
 
 function closeModal() {
@@ -327,6 +332,7 @@ function createFigureModal(work) {
 
   const deleteBtn = document.createElement("button");
   deleteBtn.classList.add("trash-btn");
+  deleteBtn.type = "button";
   deleteBtn.dataset.id = work.id; //i don't need the ${} here somehow?
   deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i>`;
 
@@ -339,6 +345,8 @@ function createFigureModal(work) {
 }
 
 async function handleDelete(event) {
+  event.preventDefault();
+  //event.stopPropagation();
   const button = event.currentTarget;
   const workId = button.dataset.id;
   const token = JSON.parse(localStorage.getItem("token"));
@@ -361,9 +369,10 @@ async function handleDelete(event) {
 
     //refreshing the works cache
 
-    dataFetcher.clearWorksCache(); //
-    const updatedWorks = await dataFetcher.getWorks(); //
-    displayWorks(updatedWorks); //
+    dataFetcher.clearWorksCache();
+    const updatedWorks = await dataFetcher.getWorks();
+    displayWorksModal(updatedWorks);
+    displayWorks(updatedWorks);
   } catch (error) {
     console.error("Error deleting work:", error);
     alert("Failed to delete the image. Please try again.");
@@ -406,6 +415,7 @@ async function uploadFormView() {
   addUploadCategorySelect(categories);
 
   addSubmitButton();
+  setupUploadFormListeners();
   modalStage = "upload";
 }
 
@@ -556,9 +566,34 @@ function addSubmitButton() {
   const button = document.createElement("button");
   button.type = "submit";
   button.classList.add("submit-btn");
+  button.setAttribute("disabled", "");
   button.innerText = "Valider";
   buttonDiv.appendChild(button);
   form.appendChild(buttonDiv);
+}
+
+function submitBtnGreen() {
+  const file = document.querySelector("#fileUpload")?.files[0];
+  const title = document.querySelector("#uploadTextTitle")?.value.trim();
+  const category = document.querySelector("#uploadCategory")?.value.trim();
+  const submitBtn = document.querySelector(".submit-btn");
+
+  const validForm = file && title && category;
+
+  if (submitBtn) {
+    submitBtn.disabled = !validForm; //makes the button clickable
+    submitBtn.classList.toggle("formvalide", validForm); //makes the button green <3
+  }
+}
+
+function setupUploadFormListeners() {
+  const file = document.querySelector("#fileUpload");
+  const title = document.querySelector("#uploadTextTitle");
+  const category = document.querySelector("#uploadCategory");
+
+  [file, title, category].forEach((element) => {
+    element.addEventListener("input", submitBtnGreen);
+  });
 }
 
 async function handleFormSubmit(event) {
@@ -591,13 +626,15 @@ async function handleFormSubmit(event) {
 
     const result = await response.json();
     console.log("Upload réussi :", result);
+    alert("Image ajoutée avec succès !");
 
     // refresh works list cause there has been a change
     dataFetcher.clearWorksCache();
     const updatedWorks = await dataFetcher.getWorks();
     displayWorks(updatedWorks);
 
-    resetModalState();
+    //resetModalState();
+    closeModal();
   } catch (error) {
     console.log("Form data:", file, title, category);
     console.error("Erreur d'upload :", error);
