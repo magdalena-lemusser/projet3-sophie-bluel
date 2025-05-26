@@ -4,7 +4,6 @@ function init() {
 
   if (loginForm) {
     initLogin();
-    return;
   }
 
   if (isHomepage) {
@@ -12,28 +11,36 @@ function init() {
   }
 }
 
-// 1. Create the factory
+// 1. factory function
 const createDataFetcher = () => {
-  let worksCache = null;
-  let categoriesCache = null;
+  let worksMemo = null;
+  let categoriesMemo = null;
 
+  //returns an object
   return {
     async getWorks() {
-      if (!worksCache) {
+      if (!worksMemo) {
+        //cache mémoire temporaire en	Mémoire RAM (dans le code JS)
         const response = await fetch("http://localhost:5678/api/works");
-        worksCache = await response.json();
+        worksMemo = await response.json();
       }
-      return worksCache;
+      return worksMemo;
     },
     async getCategories() {
-      if (!categoriesCache) {
+      if (!categoriesMemo) {
         const response = await fetch("http://localhost:5678/api/categories");
-        categoriesCache = await response.json();
+        categoriesMemo = await response.json();
       }
-      return categoriesCache;
+      return categoriesMemo;
     },
-    clearWorksCache() {
-      worksCache = null;
+    addWork(newWork) {
+      if (!worksMemo) worksMemo = [];
+      worksMemo.push(newWork);
+    },
+
+    deleteWorkById(id) {
+      if (!worksMemo) return; //if There’s nothing to delete from, just leave
+      worksMemo = worksMemo.filter((work) => work.id !== Number(id)); // new list of works that doesn’t include the one with this id.
     },
   };
 };
@@ -46,7 +53,7 @@ async function initHomepage() {
     activateEditorMode();
   }
 
-  const works = await dataFetcher.getWorks();
+  const works = await dataFetcher.getWorks(); // object + method
   const categories = await dataFetcher.getCategories();
   const allCategory = { id: 0, name: "Tous" }; // Adds the "All" category manually first so it appears first!
   const allCategories = [allCategory, ...categories]; // Using spread syntax to combine both arrays
@@ -367,12 +374,9 @@ async function handleDelete(event) {
 
     console.log(`Work with ID ${workId} deleted successfully!`);
 
-    //refreshing the works cache
-
-    dataFetcher.clearWorksCache();
-    const updatedWorks = await dataFetcher.getWorks();
-    displayWorksModal(updatedWorks);
-    displayWorks(updatedWorks);
+    dataFetcher.deleteWorkById(workId);
+    displayWorksModal(await dataFetcher.getWorks());
+    displayWorks(await dataFetcher.getWorks());
   } catch (error) {
     console.error("Error deleting work:", error);
     alert("Failed to delete the image. Please try again.");
@@ -411,7 +415,7 @@ async function uploadFormView() {
   renderUploadForm();
   addUploadTitleInput();
 
-  const categories = await dataFetcher.getCategories(); // <--- fetch them again here!
+  const categories = await dataFetcher.getCategories();
   addUploadCategorySelect(categories);
 
   addSubmitButton();
@@ -628,10 +632,8 @@ async function handleFormSubmit(event) {
     console.log("Upload réussi :", result);
     alert("Image ajoutée avec succès !");
 
-    // refresh works list cause there has been a change
-    dataFetcher.clearWorksCache();
-    const updatedWorks = await dataFetcher.getWorks();
-    displayWorks(updatedWorks);
+    dataFetcher.addWork(result); // updates worksMemo
+    displayWorks(await dataFetcher.getWorks()); //
 
     //resetModalState();
     closeModal();
