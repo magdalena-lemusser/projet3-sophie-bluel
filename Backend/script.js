@@ -582,7 +582,7 @@ function submitBtnGreen() {
   const category = document.querySelector("#uploadCategory")?.value.trim();
   const submitBtn = document.querySelector(".submit-btn");
 
-  const validForm = file && title && category;
+  const validForm = !!(file && title && category);
 
   if (submitBtn) {
     submitBtn.disabled = !validForm; //makes the button clickable
@@ -595,9 +595,9 @@ function setupUploadFormListeners() {
   const title = document.querySelector("#uploadTextTitle");
   const category = document.querySelector("#uploadCategory");
 
-  [file, title, category].forEach((element) => {
-    element.addEventListener("input", submitBtnGreen);
-  });
+  title.addEventListener("input", submitBtnGreen); // text input
+  file.addEventListener("change", submitBtnGreen); // file input
+  category.addEventListener("change", submitBtnGreen); // select input
 }
 
 async function handleFormSubmit(event) {
