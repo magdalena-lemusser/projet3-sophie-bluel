@@ -178,8 +178,8 @@ function setUpLoginForm(form) {
       }
 
       //login success
-      localStorage.setItem("token", JSON.stringify(data.token)); // Saves ONLY the token data as a string in the browser storage under the name USER
-      window.location.href = "../FrontEnd/index.html"; // 🎉 redirect
+      localStorage.setItem("token", JSON.stringify(data.token)); // Saves ONLY the token data as a string in the browser storage under the name TOKEN
+      window.location.href = "../FrontEnd/index.html";
     } catch (err) {
       console.error("Erreur d'authentification:", err);
       errorElement.textContent =
